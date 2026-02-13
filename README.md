@@ -1,9 +1,8 @@
 # Project_Nova
-<html>
   
-<p>Project Nova is a python program where you can create and interact with bots. This program uses what I like to call the TKAEM system, meaning the Tiered Keyword and Embedding Memory system. This makes even high context bot have dynamic human like memory and thought processing modules.</p>
+<p>Project Nova is a python program where you can create and interact with bots. This program uses what I like to call the TKAEM system, meaning the Tiered Keyword and Embedding Memory system. This makes even high context bot have dynamic human like memory and thought processing modules.
 
-<p>If you like what I create consider supporting me by buying me a coffee ;)</p>
-<a href="https://www.buymeacoffee.com/saimon_szaszakg"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=saimon_szaszakg&button_colour=BD5FFF&font_colour=ffffff&font_family=Comic&outline_colour=000000&coffee_colour=FFDD00" /></a>
+If you like what I create consider supporting me by buying me a coffee ;)
 
-</html>
+<a href="https://www.buymeacoffee.com/saimon_szaszakg" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-yellow.png" alt="Buy Me A Coffee" height="100" width="500"></a>
+
