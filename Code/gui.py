@@ -1,0 +1,408 @@
+from http import HTTPStatus
+from http.server import BaseHTTPRequestHandler
+from http.server import HTTPServer
+from pathlib import Path
+from variables import *
+import threading
+import json
+
+GUI_DIR = Path(__file__).resolve().parent.parent / "GUI_Website"
+STATIC_FILES = {
+	"/": ("main.html", "text/html; charset=utf-8"),
+	"/main.html": ("main.html", "text/html; charset=utf-8"),
+	"/style.css": ("style.css", "text/css; charset=utf-8"),
+	"/code.js": ("code.js", "application/javascript; charset=utf-8"),
+}
+
+
+def _build_handler(callbacks):
+	class GuiHandler(BaseHTTPRequestHandler):
+		def _send_static(self, request_path):
+			static_entry = STATIC_FILES.get(request_path)
+			if not static_entry:
+				self.send_error(HTTPStatus.NOT_FOUND)
+				return
+
+			file_name, content_type = static_entry
+			file_path = GUI_DIR / file_name
+			if not file_path.exists():
+				self.send_error(HTTPStatus.NOT_FOUND)
+				return
+
+			body_bytes = file_path.read_bytes()
+			self.send_response(HTTPStatus.OK)
+			self.send_header("Content-Type", content_type)
+			self.send_header("Content-Length", str(len(body_bytes)))
+			self.end_headers()
+			self.wfile.write(body_bytes)
+
+		def do_GET(self):  # noqa: N802
+			request_path = self.path.split("?", 1)[0]
+			# API endpoints for GET requests
+			if request_path == "/api/bots":
+				if callbacks.get('on_bot_list'):
+					result = callbacks['on_bot_list']()
+					response_data = json.dumps(result or [])
+				else:
+					response_data = json.dumps([])
+					
+				response_bytes = response_data.encode('utf-8')
+				self.send_response(HTTPStatus.OK)
+				self.send_header('Content-Type', 'application/json')
+				self.send_header('Content-Length', str(len(response_bytes)))
+				self.end_headers()
+				self.wfile.write(response_bytes)
+				return
+				
+			elif request_path == "/api/chats":
+				if callbacks.get('on_chat_list'):
+					result = callbacks['on_chat_list']()
+					response_data = json.dumps(result or [])
+				else:
+					response_data = json.dumps([])
+					
+				response_bytes = response_data.encode('utf-8')
+				self.send_response(HTTPStatus.OK)
+				self.send_header('Content-Type', 'application/json')
+				self.send_header('Content-Length', str(len(response_bytes)))
+				self.end_headers()
+				self.wfile.write(response_bytes)
+				return
+				
+			elif request_path == "/api/personas":
+				if callbacks.get('on_personas_list'):
+					result = callbacks['on_personas_list']()
+					response_data = json.dumps(result or [])
+				else:
+					response_data = json.dumps([])
+					
+				response_bytes = response_data.encode('utf-8')
+				self.send_response(HTTPStatus.OK)
+				self.send_header('Content-Type', 'application/json')
+				self.send_header('Content-Length', str(len(response_bytes)))
+				self.end_headers()
+				self.wfile.write(response_bytes)
+				return
+			
+			elif request_path == "/api/settings":
+				if callbacks.get('on_settings_get'):
+					result = callbacks['on_settings_get']()
+					response_data = json.dumps(result or {})
+				else:
+					response_data = json.dumps({})
+					
+				response_bytes = response_data.encode('utf-8')
+				self.send_response(HTTPStatus.OK)
+				self.send_header('Content-Type', 'application/json')
+				self.send_header('Content-Length', str(len(response_bytes)))
+				self.end_headers()
+				self.wfile.write(response_bytes)
+				return
+			
+			elif request_path in STATIC_FILES:
+				self._send_static(request_path)
+				return
+
+			self.send_error(HTTPStatus.NOT_FOUND)
+			return
+
+		def do_POST(self):  # noqa: N802
+			if self.path == "/api/message":
+				content_length = int(self.headers.get('Content-Length', 0))
+				body = self.rfile.read(content_length)
+				try:
+					data = json.loads(body.decode('utf-8'))
+					message = data.get('message', '')
+					save_response = data.get('save_response', False)
+					chat_id = data.get('chat_id')
+					bot_name = data.get('bot_name')
+					
+					if callbacks.get('on_message'):
+						response = callbacks['on_message'](message, save_response, chat_id, bot_name)
+						if response and not save_response:
+							# Only return response if this is a user message, not saving a bot response
+							response_data = json.dumps({"response": response})
+							response_bytes = response_data.encode('utf-8')
+							self.send_response(HTTPStatus.OK)
+							self.send_header('Content-Type', 'application/json')
+							self.send_header('Content-Length', str(len(response_bytes)))
+							self.end_headers()
+							self.wfile.write(response_bytes)
+							return
+						elif save_response:
+							# For bot responses, just acknowledge
+							response_data = json.dumps({"success": True})
+							response_bytes = response_data.encode('utf-8')
+							self.send_response(HTTPStatus.OK)
+							self.send_header('Content-Type', 'application/json')
+							self.send_header('Content-Length', str(len(response_bytes)))
+							self.end_headers()
+							self.wfile.write(response_bytes)
+							return
+				except Exception as e:
+					print(f"[GUI] Error in /api/message: {e}")
+					self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
+					self.end_headers()
+					return
+
+			elif self.path == "/api/load-chat":
+				content_length = int(self.headers.get('Content-Length', 0))
+				body = self.rfile.read(content_length)
+				try:
+					data = json.loads(body.decode('utf-8'))
+					chat_id = data.get('chat_id')
+					bot_name = data.get('bot_name')
+					if callbacks.get('on_load_chat'):
+						result = callbacks['on_load_chat'](chat_id, bot_name)
+						response_data = json.dumps(result or {})
+					else:
+						response_data = json.dumps({})
+						
+					response_bytes = response_data.encode('utf-8')
+					self.send_response(HTTPStatus.OK)
+					self.send_header('Content-Type', 'application/json')
+					self.send_header('Content-Length', str(len(response_bytes)))
+					self.end_headers()
+					self.wfile.write(response_bytes)
+					return
+				except Exception as e:
+					print(f"[GUI] Error in /api/load-chat: {e}")
+					self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
+					self.end_headers()
+					return
+			
+			elif self.path == "/api/bot/select":
+				content_length = int(self.headers.get('Content-Length', 0))
+				body = self.rfile.read(content_length)
+				try:
+					data = json.loads(body.decode('utf-8'))
+					bot_name = data.get('bot_name')
+					if callbacks.get('on_bot_select'):
+						result = callbacks['on_bot_select'](bot_name)
+						response_data = json.dumps({"success": result is not None, "bot": result})
+					else:
+						response_data = json.dumps({"success": False})
+						
+					response_bytes = response_data.encode('utf-8')
+					self.send_response(HTTPStatus.OK)
+					self.send_header('Content-Type', 'application/json')
+					self.send_header('Content-Length', str(len(response_bytes)))
+					self.end_headers()
+					self.wfile.write(response_bytes)
+					return
+				except Exception as e:
+					print(f"[GUI] Error in /api/bot/select: {e}")
+					self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
+					self.end_headers()
+					return
+					
+			elif self.path == "/api/bots":
+				content_length = int(self.headers.get('Content-Length', 0))
+				body = self.rfile.read(content_length) if content_length > 0 else b''
+				try:
+					if body:
+						data = json.loads(body.decode('utf-8'))
+						action = data.get('action', 'list')
+						if action == 'create' and callbacks.get('on_bot_create'):
+							result = callbacks['on_bot_create'](data.get('name'), data.get('core_data', ''))
+							response_data = json.dumps(result or {})
+						else:
+							response_data = json.dumps([])
+					else:
+						if callbacks.get('on_bot_list'):
+							result = callbacks['on_bot_list']()
+							response_data = json.dumps(result or [])
+						else:
+							response_data = json.dumps([])
+						
+					response_bytes = response_data.encode('utf-8')
+					self.send_response(HTTPStatus.OK)
+					self.send_header('Content-Type', 'application/json')
+					self.send_header('Content-Length', str(len(response_bytes)))
+					self.end_headers()
+					self.wfile.write(response_bytes)
+					return
+				except Exception as e:
+					print(f"[GUI] Error in /api/bots: {e}")
+					self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
+					self.end_headers()
+					return
+					
+			elif self.path == "/api/chats":
+				content_length = int(self.headers.get('Content-Length', 0))
+				body = self.rfile.read(content_length) if content_length > 0 else b''
+				try:
+					if body:
+						data = json.loads(body.decode('utf-8'))
+						action = data.get('action', 'create')
+						if action == 'create' and callbacks.get('on_chat_create'):
+							result = callbacks['on_chat_create'](data.get('bot_name'), data.get('title'))
+							response_data = json.dumps(result or {})
+						else:
+							response_data = json.dumps({})
+					else:
+						if callbacks.get('on_chat_list'):
+							result = callbacks['on_chat_list']()
+							response_data = json.dumps(result or [])
+						else:
+							response_data = json.dumps([])
+						
+					response_bytes = response_data.encode('utf-8')
+					self.send_response(HTTPStatus.OK)
+					self.send_header('Content-Type', 'application/json')
+					self.send_header('Content-Length', str(len(response_bytes)))
+					self.end_headers()
+					self.wfile.write(response_bytes)
+					return
+				except Exception as e:
+					print(f"[GUI] Error in /api/chats: {e}")
+					self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
+					self.end_headers()
+					return
+					
+			elif self.path == "/api/last-chat":
+				content_length = int(self.headers.get('Content-Length', 0))
+				body = self.rfile.read(content_length)
+				try:
+					data = json.loads(body.decode('utf-8'))
+					bot_name = data.get('bot_name')
+					if callbacks.get('on_get_last_chat'):
+						result = callbacks['on_get_last_chat'](bot_name)
+						response_data = json.dumps(result or {})
+					else:
+						response_data = json.dumps({})
+						
+					response_bytes = response_data.encode('utf-8')
+					self.send_response(HTTPStatus.OK)
+					self.send_header('Content-Type', 'application/json')
+					self.send_header('Content-Length', str(len(response_bytes)))
+					self.end_headers()
+					self.wfile.write(response_bytes)
+					return
+				except Exception as e:
+					print(f"[GUI] Error in /api/last-chat: {e}")
+					self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
+					self.end_headers()
+					return
+					
+			elif self.path == "/api/personas":
+				content_length = int(self.headers.get('Content-Length', 0))
+				body = self.rfile.read(content_length) if content_length > 0 else b''
+				try:
+					if body:
+						data = json.loads(body.decode('utf-8'))
+						action = data.get('action', 'create')
+						if action == 'create' and callbacks.get('on_persona_create'):
+							result = callbacks['on_persona_create'](data.get('name'), data.get('description', ''), data.get('cover_art', ''))
+							response_data = json.dumps(result or {})
+						else:
+							response_data = json.dumps({})
+					else:
+						if callbacks.get('on_personas_list'):
+							result = callbacks['on_personas_list']()
+							response_data = json.dumps(result or [])
+						else:
+							response_data = json.dumps([])
+						
+					response_bytes = response_data.encode('utf-8')
+					self.send_response(HTTPStatus.OK)
+					self.send_header('Content-Type', 'application/json')
+					self.send_header('Content-Length', str(len(response_bytes)))
+					self.end_headers()
+					self.wfile.write(response_bytes)
+					return
+				except Exception as e:
+					print(f"[GUI] Error in /api/personas: {e}")
+					self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
+					self.end_headers()
+					return
+					
+			elif self.path == "/api/settings":
+				content_length = int(self.headers.get('Content-Length', 0))
+				body = self.rfile.read(content_length) if content_length > 0 else b''
+				try:
+					if body:
+						data = json.loads(body.decode('utf-8'))
+						action = data.get('action', 'update')
+						if action == 'update' and callbacks.get('on_settings_update'):
+							result = callbacks['on_settings_update'](data.get('settings', {}))
+							response_data = json.dumps({"success": result})
+						else:
+							response_data = json.dumps({"success": False})
+					else:
+						if callbacks.get('on_settings_get'):
+							result = callbacks['on_settings_get']()
+							response_data = json.dumps(result or {})
+						else:
+							response_data = json.dumps({})
+						
+					response_bytes = response_data.encode('utf-8')
+					self.send_response(HTTPStatus.OK)
+					self.send_header('Content-Type', 'application/json')
+					self.send_header('Content-Length', str(len(response_bytes)))
+					self.end_headers()
+					self.wfile.write(response_bytes)
+					return
+				except Exception as e:
+					print(f"[GUI] Error in /api/settings: {e}")
+					self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
+					self.end_headers()
+					return
+			
+			elif self.path == "/api/settings/reset":
+				try:
+					if callbacks.get('on_settings_reset'):
+						result = callbacks['on_settings_reset']()
+						response_data = json.dumps(result or {})
+					else:
+						response_data = json.dumps({})
+						
+					response_bytes = response_data.encode('utf-8')
+					self.send_response(HTTPStatus.OK)
+					self.send_header('Content-Type', 'application/json')
+					self.send_header('Content-Length', str(len(response_bytes)))
+					self.end_headers()
+					self.wfile.write(response_bytes)
+					return
+				except Exception as e:
+					print(f"[GUI] Error in /api/settings/reset: {e}")
+					self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
+					self.end_headers()
+					return
+
+			self.send_error(HTTPStatus.NOT_FOUND)
+			return
+
+		def log_message(self, _format, *_args):
+			return
+
+	return GuiHandler
+
+
+def start_gui_server(on_message=None, on_bot_list=None, on_bot_select=None, on_bot_create=None, 
+                     on_chat_list=None, on_chat_create=None, on_get_last_chat=None, on_load_chat=None, on_settings_get=None, 
+                     on_settings_update=None, on_settings_reset=None, on_personas_list=None, on_persona_select=None, 
+                     on_persona_create=None, on_persona_update=None):
+	callbacks = {
+		'on_message': on_message,
+		'on_bot_list': on_bot_list,
+		'on_bot_select': on_bot_select,
+		'on_bot_create': on_bot_create,
+		'on_chat_list': on_chat_list,
+		'on_chat_create': on_chat_create,
+		'on_get_last_chat': on_get_last_chat,
+		'on_load_chat': on_load_chat,
+		'on_settings_get': on_settings_get,
+		'on_settings_update': on_settings_update,
+		'on_settings_reset': on_settings_reset,
+		'on_personas_list': on_personas_list,
+		'on_persona_select': on_persona_select,
+		'on_persona_create': on_persona_create,
+		'on_persona_update': on_persona_update
+	}
+	handler = _build_handler(callbacks)
+	server = HTTPServer(("127.0.0.1", LOCALHOST), handler)
+	port = server.server_address[1]
+	thread = threading.Thread(target=server.serve_forever, daemon=True)
+	thread.start()
+	return server, thread, f"http://127.0.0.1:{port}/"
