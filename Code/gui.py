@@ -10,21 +10,18 @@ GUI_DIR = Path(__file__).resolve().parent.parent / "GUI_Website"
 STATIC_FILES = {
 	"/": ("main.html", "text/html; charset=utf-8"),
 	"/main.html": ("main.html", "text/html; charset=utf-8"),
-	"/style.css": ("style.css", "text/css; charset=utf-8"),
 	"/code.js": ("code.js", "application/javascript; charset=utf-8"),
+}
+MIME_TYPES = {
+	".css": "text/css; charset=utf-8",
+	".js": "application/javascript; charset=utf-8",
+	".html": "text/html; charset=utf-8",
 }
 
 
 def _build_handler(callbacks):
 	class GuiHandler(BaseHTTPRequestHandler):
-		def _send_static(self, request_path):
-			static_entry = STATIC_FILES.get(request_path)
-			if not static_entry:
-				self.send_error(HTTPStatus.NOT_FOUND)
-				return
-
-			file_name, content_type = static_entry
-			file_path = GUI_DIR / file_name
+		def _send_static(self, file_path, content_type):
 			if not file_path.exists():
 				self.send_error(HTTPStatus.NOT_FOUND)
 				return
@@ -99,8 +96,31 @@ def _build_handler(callbacks):
 				self.wfile.write(response_bytes)
 				return
 			
+			elif request_path == "/api/themes":
+				themes = [p.stem for p in GUI_DIR.glob("*.css")]
+				themes.sort()
+				response_data = json.dumps(themes)
+				response_bytes = response_data.encode('utf-8')
+				self.send_response(HTTPStatus.OK)
+				self.send_header('Content-Type', 'application/json')
+				self.send_header('Content-Length', str(len(response_bytes)))
+				self.end_headers()
+				self.wfile.write(response_bytes)
+				return
+
 			elif request_path in STATIC_FILES:
-				self._send_static(request_path)
+				file_name, content_type = STATIC_FILES[request_path]
+				self._send_static(GUI_DIR / file_name, content_type)
+				return
+
+			elif request_path.startswith("/"):
+				file_name = request_path.lstrip("/")
+				ext = Path(file_name).suffix
+				content_type = MIME_TYPES.get(ext)
+				if content_type:
+					self._send_static(GUI_DIR / file_name, content_type)
+					return
+				self.send_error(HTTPStatus.NOT_FOUND)
 				return
 
 			self.send_error(HTTPStatus.NOT_FOUND)
@@ -370,6 +390,33 @@ def _build_handler(callbacks):
 					self.end_headers()
 					return
 
+			elif self.path == "/api/settings/test":
+				content_length = int(self.headers.get('Content-Length', 0))
+				body = self.rfile.read(content_length) if content_length > 0 else b''
+				try:
+					settings_payload = {}
+					if body:
+						data = json.loads(body.decode('utf-8'))
+						settings_payload = data.get('settings', {})
+					if callbacks.get('on_settings_test'):
+						result = callbacks['on_settings_test'](settings_payload)
+						response_data = json.dumps(result or {"success": False, "message": "No response"})
+					else:
+						response_data = json.dumps({"success": False, "message": "Test not available"})
+					
+					response_bytes = response_data.encode('utf-8')
+					self.send_response(HTTPStatus.OK)
+					self.send_header('Content-Type', 'application/json')
+					self.send_header('Content-Length', str(len(response_bytes)))
+					self.end_headers()
+					self.wfile.write(response_bytes)
+					return
+				except Exception as e:
+					print(f"[GUI] Error in /api/settings/test: {e}")
+					self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
+					self.end_headers()
+					return
+
 			self.send_error(HTTPStatus.NOT_FOUND)
 			return
 
@@ -381,7 +428,7 @@ def _build_handler(callbacks):
 
 def start_gui_server(on_message=None, on_bot_list=None, on_bot_select=None, on_bot_create=None, 
                      on_chat_list=None, on_chat_create=None, on_get_last_chat=None, on_load_chat=None, on_settings_get=None, 
-                     on_settings_update=None, on_settings_reset=None, on_personas_list=None, on_persona_select=None, 
+                     on_settings_update=None, on_settings_reset=None, on_settings_test=None, on_personas_list=None, on_persona_select=None, 
                      on_persona_create=None, on_persona_update=None):
 	callbacks = {
 		'on_message': on_message,
@@ -395,6 +442,7 @@ def start_gui_server(on_message=None, on_bot_list=None, on_bot_select=None, on_b
 		'on_settings_get': on_settings_get,
 		'on_settings_update': on_settings_update,
 		'on_settings_reset': on_settings_reset,
+		'on_settings_test': on_settings_test,
 		'on_personas_list': on_personas_list,
 		'on_persona_select': on_persona_select,
 		'on_persona_create': on_persona_create,

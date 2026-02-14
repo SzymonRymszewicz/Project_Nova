@@ -1,18 +1,21 @@
 {
-  "theme": "cyberpunk",
+  "theme": "rose",
   "enable_animations": true,
-  "font_size": 12,
+  "ui_font_size": 16,
+  "chat_font_size": 26,
   "console_width": 980,
   "console_height": 620,
   "max_context_messages": 20,
   "temperature": 0.7,
   "max_tokens": 2048,
-  "api_provider": "openai",
+  "api_provider": "localhost",
   "api_key": "",
-  "api_base_url": "https://api.openai.com/v1",
-  "model": "gpt-3.5-turbo",
+  "api_base_url": "http://localhost:1234/v1",
+  "model": "",
   "auto_save_chats": true,
   "default_bot": "Nova",
   "gui_port": 5067,
-  "auto_load_last_chat": true
+  "auto_load_last_chat": true,
+  "show_message_timestamps": true,
+  "debug_mode": false
 }

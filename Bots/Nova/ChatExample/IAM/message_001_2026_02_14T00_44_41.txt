@@ -1,5 +1,0 @@
-{
-  "role": "assistant",
-  "content": "Message received! (Bot response will be implemented soon)",
-  "timestamp": "2026-02-14T00:44:41.701732"
-}

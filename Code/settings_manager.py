@@ -12,9 +12,10 @@ class SettingsManager:
         self.settings = {}
         self.default_settings = {
             # Style Settings
-            "theme": "cyberpunk",
+            "theme": "default",
             "enable_animations": True,
-            "font_size": 12,
+            "ui_font_size": 14,
+            "chat_font_size": 12,
             "console_width": 980,
             "console_height": 620,
             
@@ -24,16 +25,18 @@ class SettingsManager:
             "max_tokens": 2048,
             
             # API Client Settings
-            "api_provider": "openai",
+            "api_provider": "localhost",
             "api_key": "",
-            "api_base_url": "https://api.openai.com/v1",
-            "model": "gpt-3.5-turbo",
+            "api_base_url": "http://localhost:1234/v1",
+            "model": "",
             
             # Other Settings
             "auto_save_chats": True,
             "default_bot": "Nova",
             "gui_port": 5067,
-            "auto_load_last_chat": True
+            "auto_load_last_chat": True,
+            "show_message_timestamps": True,
+            "debug_mode": False
         }
         self.load_settings()
         
@@ -59,6 +62,14 @@ class SettingsManager:
                     # Merge with defaults to ensure all keys exist
                     self.settings = self.default_settings.copy()
                     self.settings.update(loaded_settings)
+                    legacy_font = loaded_settings.get("font_size")
+                    if legacy_font is not None:
+                        if "ui_font_size" not in loaded_settings:
+                            self.settings["ui_font_size"] = legacy_font
+                        if "chat_font_size" not in loaded_settings:
+                            self.settings["chat_font_size"] = legacy_font
+                    if "chat_font_size" not in self.settings and "ui_font_size" in self.settings:
+                        self.settings["chat_font_size"] = self.settings["ui_font_size"]
                     
             print("[SettingsManager] Loaded settings")
             return self.settings

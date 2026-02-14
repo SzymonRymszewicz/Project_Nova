@@ -200,8 +200,29 @@ class ChatManager:
             for iam_file in iam_files:
                 try:
                     with open(iam_file, 'r', encoding='utf-8') as f:
-                        message = json.load(f)
-                        messages.append(message)
+                        payload = json.load(f)
+
+                    if isinstance(payload, dict) and "role" in payload and "content" in payload:
+                        # Legacy single-message format
+                        messages.append(payload)
+                        continue
+
+                    if isinstance(payload, dict) and ("user" in payload or "assistant" in payload):
+                        user_msg = payload.get("user")
+                        assistant_msg = payload.get("assistant")
+                        if user_msg:
+                            messages.append({
+                                "role": "user",
+                                "content": user_msg.get("content", ""),
+                                "timestamp": user_msg.get("timestamp")
+                            })
+                        if assistant_msg:
+                            messages.append({
+                                "role": "assistant",
+                                "content": assistant_msg.get("content", ""),
+                                "timestamp": assistant_msg.get("timestamp")
+                            })
+                        continue
                 except Exception as e:
                     print(f"[ChatManager] Error loading message from {iam_file}: {e}")
         
@@ -247,17 +268,36 @@ class ChatManager:
             except:
                 pass
         
-        # Save each message as a timestamped file
+        # Save each user + assistant turn as a paired file
         try:
-            for idx, message in enumerate(messages):
-                timestamp = message.get("timestamp", datetime.now().isoformat())
+            pairs = []
+            pending_user = None
+
+            for message in messages:
+                if message.get("role") == "user":
+                    if pending_user is not None:
+                        pairs.append({"user": pending_user, "assistant": None})
+                    pending_user = message
+                elif message.get("role") == "assistant":
+                    if pending_user is None:
+                        pairs.append({"user": None, "assistant": message})
+                    else:
+                        pairs.append({"user": pending_user, "assistant": message})
+                        pending_user = None
+
+            if pending_user is not None:
+                pairs.append({"user": pending_user, "assistant": None})
+
+            for idx, pair in enumerate(pairs):
+                base = pair.get("user") or pair.get("assistant") or {}
+                timestamp = base.get("timestamp", datetime.now().isoformat())
                 # Convert ISO format to filename: 2024-01-15T10:30:45.123456 -> 2024_01_15_10_30_45
                 timestamp_safe = timestamp.replace(":", "_").replace("-", "_").split(".")[0]
                 filename = f"message_{idx:03d}_{timestamp_safe}.txt"
-                
+
                 iam_file = iam_folder / filename
                 with open(iam_file, 'w', encoding='utf-8') as f:
-                    json.dump(message, f, indent=2)
+                    json.dump(pair, f, indent=2)
             
             print(f"[ChatManager] Saved {len(messages)} messages to IAM/")
         except Exception as e:

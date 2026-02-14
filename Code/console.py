@@ -33,7 +33,7 @@ class ConsoleWindow:
 			"help": ("Show available commands.", "help"),
 			"clear": ("Clear the console output.", "clear"),
 			"exit": ("Exit the console and stop the app.", "exit"),
-			"restart": ("Restart the app and return to bot selection.", "restart"),
+			"restart": ("Restart the app.", "restart"),
 		}
 		self._completions = set(self._commands.keys())
 		self._closed = False
