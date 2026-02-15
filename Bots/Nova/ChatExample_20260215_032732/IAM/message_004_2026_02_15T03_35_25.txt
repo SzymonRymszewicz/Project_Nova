@@ -1,0 +1,12 @@
+{
+  "user": {
+    "role": "user",
+    "content": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "timestamp": "2026-02-15T03:35:25.023137"
+  },
+  "assistant": {
+    "role": "assistant",
+    "content": "Message received! (Bot response will be implemented soon)",
+    "timestamp": "2026-02-15T03:35:25.035216"
+  }
+}

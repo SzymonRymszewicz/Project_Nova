@@ -4,7 +4,7 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Project Nova - AI Assistant</title>
-	<link rel="stylesheet" href="/default.css" id="themeStylesheet">
+	<link rel="stylesheet" href="/Styles/default.css" id="themeStylesheet">
 </head>
 <body>
 	<div class="app">
@@ -49,12 +49,22 @@
 			<div class="messages" id="messages"></div>
 			<div class="input-area" id="inputArea">
 				<div class="input-wrapper">
-					<input type="text" class="input-field" id="messageInput" placeholder="Type your message...">
+					<textarea class="input-field" id="messageInput" placeholder="Type your message..." rows="1"></textarea>
 					<button class="send-btn" id="sendBtn">Send</button>
 				</div>
 			</div>
 		</div>
+		<div class="bot-panel" id="botPanel">
+			<div class="bot-panel-inner" id="botPanelInner"></div>
+		</div>
 	</div>
-	<script src="/code.js"></script>
+	<script src="/Code/app_state.js"></script>
+	<script src="/Code/chat.js"></script>
+	<script src="/Code/bots.js"></script>
+	<script src="/Code/personas.js"></script>
+	<script src="/Code/chats.js"></script>
+	<script src="/Code/bot_panel.js"></script>
+	<script src="/Code/settings.js"></script>
+	<script src="/Code/navigation.js"></script>
 </body>
 </html>

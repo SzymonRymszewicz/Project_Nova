@@ -7,15 +7,23 @@ import threading
 import json
 
 GUI_DIR = Path(__file__).resolve().parent.parent / "GUI_Website"
+GUI_STYLES_DIR = GUI_DIR / "Styles"
+BOTS_DIR = Path(__file__).resolve().parent.parent / "Bots"
+PERSONAS_DIR = Path(__file__).resolve().parent.parent / "Personas"
 STATIC_FILES = {
 	"/": ("main.html", "text/html; charset=utf-8"),
 	"/main.html": ("main.html", "text/html; charset=utf-8"),
-	"/code.js": ("code.js", "application/javascript; charset=utf-8"),
 }
 MIME_TYPES = {
 	".css": "text/css; charset=utf-8",
 	".js": "application/javascript; charset=utf-8",
 	".html": "text/html; charset=utf-8",
+	".png": "image/png",
+	".jpg": "image/jpeg",
+	".jpeg": "image/jpeg",
+	".webp": "image/webp",
+	".gif": "image/gif",
+	".svg": "image/svg+xml",
 }
 
 
@@ -97,7 +105,7 @@ def _build_handler(callbacks):
 				return
 			
 			elif request_path == "/api/themes":
-				themes = [p.stem for p in GUI_DIR.glob("*.css")]
+				themes = [p.stem for p in GUI_STYLES_DIR.glob("*.css")]
 				themes.sort()
 				response_data = json.dumps(themes)
 				response_bytes = response_data.encode('utf-8')
@@ -111,6 +119,34 @@ def _build_handler(callbacks):
 			elif request_path in STATIC_FILES:
 				file_name, content_type = STATIC_FILES[request_path]
 				self._send_static(GUI_DIR / file_name, content_type)
+				return
+
+			elif request_path.startswith("/Bots/"):
+				rel_path = request_path.lstrip("/")
+				file_path = (BOTS_DIR / rel_path.split("/", 1)[1]).resolve()
+				if not str(file_path).startswith(str(BOTS_DIR.resolve())):
+					self.send_error(HTTPStatus.NOT_FOUND)
+					return
+				ext = file_path.suffix
+				content_type = MIME_TYPES.get(ext)
+				if content_type and file_path.exists():
+					self._send_static(file_path, content_type)
+					return
+				self.send_error(HTTPStatus.NOT_FOUND)
+				return
+
+			elif request_path.startswith("/Personas/"):
+				rel_path = request_path.lstrip("/")
+				file_path = (PERSONAS_DIR / rel_path.split("/", 1)[1]).resolve()
+				if not str(file_path).startswith(str(PERSONAS_DIR.resolve())):
+					self.send_error(HTTPStatus.NOT_FOUND)
+					return
+				ext = file_path.suffix
+				content_type = MIME_TYPES.get(ext)
+				if content_type and file_path.exists():
+					self._send_static(file_path, content_type)
+					return
+				self.send_error(HTTPStatus.NOT_FOUND)
 				return
 
 			elif request_path.startswith("/"):
@@ -226,6 +262,9 @@ def _build_handler(callbacks):
 						if action == 'create' and callbacks.get('on_bot_create'):
 							result = callbacks['on_bot_create'](data.get('name'), data.get('core_data', ''))
 							response_data = json.dumps(result or {})
+						elif action == 'update' and callbacks.get('on_bot_update'):
+							result = callbacks['on_bot_update'](data)
+							response_data = json.dumps(result or {})
 						else:
 							response_data = json.dumps([])
 					else:
@@ -244,6 +283,56 @@ def _build_handler(callbacks):
 					return
 				except Exception as e:
 					print(f"[GUI] Error in /api/bots: {e}")
+					self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
+					self.end_headers()
+					return
+
+			elif self.path == "/api/bot/iam":
+				content_length = int(self.headers.get('Content-Length', 0))
+				body = self.rfile.read(content_length) if content_length > 0 else b''
+				try:
+					data = json.loads(body.decode('utf-8')) if body else {}
+					action = data.get('action', 'list')
+					if callbacks.get('on_bot_iam'):
+						result = callbacks['on_bot_iam'](action, data)
+						response_data = json.dumps(result or {})
+					else:
+						response_data = json.dumps({"success": False})
+
+					response_bytes = response_data.encode('utf-8')
+					self.send_response(HTTPStatus.OK)
+					self.send_header('Content-Type', 'application/json')
+					self.send_header('Content-Length', str(len(response_bytes)))
+					self.end_headers()
+					self.wfile.write(response_bytes)
+					return
+				except Exception as e:
+					print(f"[GUI] Error in /api/bot/iam: {e}")
+					self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
+					self.end_headers()
+					return
+
+			elif self.path == "/api/bot/images":
+				content_length = int(self.headers.get('Content-Length', 0))
+				body = self.rfile.read(content_length) if content_length > 0 else b''
+				try:
+					data = json.loads(body.decode('utf-8')) if body else {}
+					action = data.get('action', 'list')
+					if callbacks.get('on_bot_images'):
+						result = callbacks['on_bot_images'](action, data)
+						response_data = json.dumps(result or {})
+					else:
+						response_data = json.dumps({"success": False})
+
+					response_bytes = response_data.encode('utf-8')
+					self.send_response(HTTPStatus.OK)
+					self.send_header('Content-Type', 'application/json')
+					self.send_header('Content-Length', str(len(response_bytes)))
+					self.end_headers()
+					self.wfile.write(response_bytes)
+					return
+				except Exception as e:
+					print(f"[GUI] Error in /api/bot/images: {e}")
 					self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
 					self.end_headers()
 					return
@@ -315,6 +404,9 @@ def _build_handler(callbacks):
 						if action == 'create' and callbacks.get('on_persona_create'):
 							result = callbacks['on_persona_create'](data.get('name'), data.get('description', ''), data.get('cover_art', ''))
 							response_data = json.dumps(result or {})
+						elif action == 'update' and callbacks.get('on_persona_update'):
+							result = callbacks['on_persona_update'](data)
+							response_data = json.dumps(result or {})
 						else:
 							response_data = json.dumps({})
 					else:
@@ -333,6 +425,31 @@ def _build_handler(callbacks):
 					return
 				except Exception as e:
 					print(f"[GUI] Error in /api/personas: {e}")
+					self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
+					self.end_headers()
+					return
+
+			elif self.path == "/api/persona/images":
+				content_length = int(self.headers.get('Content-Length', 0))
+				body = self.rfile.read(content_length) if content_length > 0 else b''
+				try:
+					data = json.loads(body.decode('utf-8')) if body else {}
+					action = data.get('action', 'list')
+					if callbacks.get('on_persona_images'):
+						result = callbacks['on_persona_images'](action, data)
+						response_data = json.dumps(result or {})
+					else:
+						response_data = json.dumps({"success": False})
+
+					response_bytes = response_data.encode('utf-8')
+					self.send_response(HTTPStatus.OK)
+					self.send_header('Content-Type', 'application/json')
+					self.send_header('Content-Length', str(len(response_bytes)))
+					self.end_headers()
+					self.wfile.write(response_bytes)
+					return
+				except Exception as e:
+					print(f"[GUI] Error in /api/persona/images: {e}")
 					self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
 					self.end_headers()
 					return
@@ -426,15 +543,18 @@ def _build_handler(callbacks):
 	return GuiHandler
 
 
-def start_gui_server(on_message=None, on_bot_list=None, on_bot_select=None, on_bot_create=None, 
+def start_gui_server(on_message=None, on_bot_list=None, on_bot_select=None, on_bot_create=None, on_bot_update=None, on_bot_iam=None, on_bot_images=None,
                      on_chat_list=None, on_chat_create=None, on_get_last_chat=None, on_load_chat=None, on_settings_get=None, 
-                     on_settings_update=None, on_settings_reset=None, on_settings_test=None, on_personas_list=None, on_persona_select=None, 
-                     on_persona_create=None, on_persona_update=None):
+					 on_settings_update=None, on_settings_reset=None, on_settings_test=None, on_personas_list=None, on_persona_select=None, 
+					 on_persona_create=None, on_persona_update=None, on_persona_images=None):
 	callbacks = {
 		'on_message': on_message,
 		'on_bot_list': on_bot_list,
 		'on_bot_select': on_bot_select,
 		'on_bot_create': on_bot_create,
+		'on_bot_update': on_bot_update,
+		'on_bot_iam': on_bot_iam,
+		'on_bot_images': on_bot_images,
 		'on_chat_list': on_chat_list,
 		'on_chat_create': on_chat_create,
 		'on_get_last_chat': on_get_last_chat,
@@ -446,7 +566,8 @@ def start_gui_server(on_message=None, on_bot_list=None, on_bot_select=None, on_b
 		'on_personas_list': on_personas_list,
 		'on_persona_select': on_persona_select,
 		'on_persona_create': on_persona_create,
-		'on_persona_update': on_persona_update
+		'on_persona_update': on_persona_update,
+		'on_persona_images': on_persona_images
 	}
 	handler = _build_handler(callbacks)
 	server = HTTPServer(("127.0.0.1", LOCALHOST), handler)

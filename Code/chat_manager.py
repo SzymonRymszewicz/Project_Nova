@@ -156,12 +156,73 @@ class ChatManager:
             chats_list.append(chat_info)
             self._save_chats_list(chats_list)
         
+        iam_messages = self._load_bot_iam_messages(bot_name)
         self.current_chat_id = chat_id
-        self.current_chat_messages = []
+        self.current_chat_messages = iam_messages
         self.current_bot_name = bot_name
+
+        if iam_messages:
+            self._save_chat_messages(chat_id, iam_messages, bot_name)
+            chat_info["message_count"] = len(iam_messages)
         
         print(f"[ChatManager] Created chat '{chat_id}' at {chat_folder}")
         return chat_info
+
+    def _load_bot_iam_messages(self, bot_name):
+        """Load bot-level IAM messages and return as chat messages"""
+        if not bot_name:
+            return []
+
+        iam_folder = self.bots_folder / bot_name / "IAM"
+        if not iam_folder.exists():
+            return []
+
+        messages = []
+        for iam_file in sorted(iam_folder.glob("*.txt")):
+            try:
+                content = iam_file.read_text(encoding='utf-8')
+            except Exception:
+                content = ""
+            if content.strip():
+                messages.append({
+                    "role": "assistant",
+                    "content": content,
+                    "timestamp": datetime.now().isoformat()
+                })
+        return messages
+
+    def rename_bot(self, bot_name, new_name):
+        """Update bot name references in chat metadata"""
+        if not bot_name or not new_name or bot_name == new_name:
+            return False
+
+        chats_list = self._load_chats_list()
+        changed = False
+        for chat in chats_list:
+            if chat.get("bot") != bot_name:
+                continue
+            chat["bot"] = new_name
+            folder = chat.get("chat_folder")
+            if folder:
+                try:
+                    folder_path = Path(folder)
+                    parts = list(folder_path.parts)
+                    for idx, part in enumerate(parts):
+                        if part == bot_name:
+                            parts[idx] = new_name
+                            break
+                    chat["chat_folder"] = str(Path(*parts))
+                except Exception:
+                    pass
+            changed = True
+
+        if changed:
+            self._save_chats_list(chats_list)
+
+        if self.current_bot_name == bot_name:
+            self.current_bot_name = new_name
+
+        return changed
         
     def load_chat(self, chat_id, bot_name):
         """Load a specific chat by ID from Bots/{BotName}/Chat{ChatName}/IAM/"""
@@ -359,6 +420,15 @@ class ChatManager:
         # Sort by last_updated descending to get the most recent
         bot_chats.sort(key=lambda x: x.get("last_updated", ""), reverse=True)
         return bot_chats[0]
+
+    def get_last_chat_any_bot(self):
+        """Get the most recent chat from any bot"""
+        all_chats = self.get_all_chats()
+        if not all_chats:
+            return None
+        # Sort by last_updated descending to get the most recent
+        all_chats.sort(key=lambda x: x.get("last_updated", ""), reverse=True)
+        return all_chats[0]
         
     def load_last_chat_for_bot(self, bot_name):
         """Load the most recent chat for a bot"""

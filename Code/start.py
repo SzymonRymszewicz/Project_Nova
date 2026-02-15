@@ -123,6 +123,66 @@ class Application:
             bot = self.bot_manager.create_bot(bot_name, core_data)
             print(f"[GUI] Bot creation requested: {bot_name}")
             return bot
+
+        def _on_bot_update(payload):
+            bot_name = payload.get("bot_name")
+            new_name = payload.get("new_name")
+            if not bot_name:
+                return {"success": False, "message": "Missing bot name"}
+
+            if new_name and new_name != bot_name:
+                renamed = self.bot_manager.rename_bot(bot_name, new_name)
+                if not renamed:
+                    return {"success": False, "message": "Rename failed"}
+                self.chat_manager.rename_bot(bot_name, new_name)
+                if self.current_bot_name == bot_name:
+                    self.current_bot_name = new_name
+                bot_name = new_name
+
+            updates = {
+                "description": payload.get("description"),
+                "cover_art": payload.get("cover_art"),
+                "icon_art": payload.get("icon_art"),
+                "cover_art_fit": payload.get("cover_art_fit"),
+                "icon_fit": payload.get("icon_fit"),
+                "short_description": payload.get("short_description"),
+                "core_data": payload.get("core_data")
+            }
+            bot = self.bot_manager.update_bot(bot_name, updates)
+            return {"success": bot is not None, "bot": bot}
+
+        def _on_bot_iam(action, payload):
+            bot_name = payload.get("bot_name")
+            if action == "list":
+                return {"items": self.bot_manager.list_iam(bot_name)}
+            if action == "add":
+                item = self.bot_manager.add_iam(bot_name, payload.get("content", ""))
+                return {"success": item is not None, "item": item}
+            if action == "update":
+                success = self.bot_manager.update_iam(bot_name, payload.get("iam_id"), payload.get("content", ""))
+                return {"success": success}
+            if action == "delete":
+                success = self.bot_manager.delete_iam(bot_name, payload.get("iam_id"))
+                return {"success": success}
+            return {"success": False}
+
+        def _on_bot_images(action, payload):
+            bot_name = payload.get("bot_name")
+            if action == "list":
+                return {"items": self.bot_manager.list_images(bot_name)}
+            if action == "upload":
+                item = self.bot_manager.add_image(bot_name, payload.get("filename"), payload.get("data_url"))
+                return {"success": item is not None, "item": item}
+            if action == "delete":
+                success = self.bot_manager.delete_image(bot_name, payload.get("filename"))
+                return {"success": success}
+            if action == "set_coverart":
+                bot = self.bot_manager.set_cover_art_from_image(bot_name, payload.get("filename"))
+                return {"success": bot is not None, "bot": bot}
+            if action == "set_icon":
+                bot = self.bot_manager.set_icon_from_image(bot_name, payload.get("filename"), payload.get("source", "Images"))
+                return {"success": bot is not None, "bot": bot}
+            return {"success": False}
             
         def _on_chat_list():
             chats = self.chat_manager.get_all_chats()
@@ -135,10 +195,15 @@ class Application:
             return chat
             
         def _on_get_last_chat(bot_name):
-            """Get the last chat for a bot, or None if none exists"""
-            last_chat_info = self.chat_manager.get_last_chat_for_bot(bot_name)
+            """Get the last chat for a bot, or the last chat from any bot if bot_name is None/empty"""
+            if bot_name:
+                last_chat_info = self.chat_manager.get_last_chat_for_bot(bot_name)
+            else:
+                last_chat_info = self.chat_manager.get_last_chat_any_bot()
+            
             if last_chat_info:
-                messages = self.chat_manager.load_chat(last_chat_info["id"], bot_name)
+                bot = last_chat_info.get("bot", bot_name)
+                messages = self.chat_manager.load_chat(last_chat_info["id"], bot)
                 return {"chat_info": last_chat_info, "messages": messages}
             return None
         
@@ -166,10 +231,39 @@ class Application:
             print(f"[GUI] Persona created: {name}")
             return persona
             
-        def _on_persona_update(persona_id, **kwargs):
-            persona = self.persona_manager.update_persona(persona_id, **kwargs)
+        def _on_persona_update(payload):
+            persona_id = payload.get("persona_id") or payload.get("id")
+            if not persona_id:
+                return None
+            updates = {
+                "name": payload.get("name"),
+                "description": payload.get("description"),
+                "cover_art": payload.get("cover_art"),
+                "icon_art": payload.get("icon_art"),
+                "cover_art_fit": payload.get("cover_art_fit"),
+                "icon_fit": payload.get("icon_fit")
+            }
+            persona = self.persona_manager.update_persona(persona_id, **updates)
             print(f"[GUI] Persona updated: {persona_id}")
             return persona
+
+        def _on_persona_images(action, payload):
+            persona_id = payload.get("persona_id") or payload.get("id") or payload.get("persona")
+            if action == "list":
+                return {"items": self.persona_manager.list_images(persona_id)}
+            if action == "upload":
+                item = self.persona_manager.add_image(persona_id, payload.get("filename"), payload.get("data_url"))
+                return {"success": item is not None, "item": item}
+            if action == "delete":
+                success = self.persona_manager.delete_image(persona_id, payload.get("filename"))
+                return {"success": success}
+            if action == "set_coverart":
+                persona = self.persona_manager.set_cover_art_from_image(persona_id, payload.get("filename"))
+                return {"success": persona is not None, "persona": persona}
+            if action == "set_icon":
+                persona = self.persona_manager.set_icon_from_image(persona_id, payload.get("filename"), payload.get("source", "Images"))
+                return {"success": persona is not None, "persona": persona}
+            return {"success": False}
             
         def _on_settings_get():
             settings = self.settings_manager.get_all()
@@ -245,9 +339,9 @@ class Application:
                 return {"success": False, "message": f"Test failed: {exc}"}
 
         self._gui_server, self._gui_thread, self._gui_url = start_gui_server(
-            _on_message, _on_bot_list, _on_bot_select, _on_bot_create,
+            _on_message, _on_bot_list, _on_bot_select, _on_bot_create, _on_bot_update, _on_bot_iam, _on_bot_images,
             _on_chat_list, _on_chat_create, _on_get_last_chat, _on_load_chat, _on_settings_get, _on_settings_update, _on_settings_reset,
-            _on_settings_test, _on_personas_list, _on_persona_select, _on_persona_create, _on_persona_update
+            _on_settings_test, _on_personas_list, _on_persona_select, _on_persona_create, _on_persona_update, _on_persona_images
         )
         webbrowser.open(self._gui_url)
 

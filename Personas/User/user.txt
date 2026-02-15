@@ -1,8 +1,8 @@
 [
   {
-    "id": "user_default",
+    "id": "User",
     "name": "User",
-    "description": "",
+    "description": "A default user persona.",
     "cover_art": "",
     "created": "2026-02-14T00:05:39.378103",
     "is_system": true

@@ -1,0 +1,14 @@
+{
+  "description": "Nova, the helpful AI assistant.",
+  "cover_art": "/Bots/Nova/Coverart/Nova.png",
+  "cover_art_fit": {
+    "size": 110,
+    "x": 40,
+    "y": 100
+  },
+  "icon_fit": {
+    "size": 100,
+    "x": 50,
+    "y": 35
+  }
+}
