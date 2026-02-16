@@ -15,7 +15,7 @@ class SettingsManager:
             "theme": "default",
             "enable_animations": True,
             "ui_font_size": 14,
-            "chat_font_size": 12,
+            "chat_font_size": 20,
             "console_width": 980,
             "console_height": 620,
             

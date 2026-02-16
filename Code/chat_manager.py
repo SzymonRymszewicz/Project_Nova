@@ -52,8 +52,6 @@ class ChatManager:
             
     def _save_chats_list(self, chats_list):
         """Save the list of all chats"""
-        if not self.chats_folder.exists() and not self.chats_list_file.exists():
-            return
         self._ensure_chats_folder()
         try:
             with open(self.chats_list_file, 'w', encoding='utf-8') as f:
@@ -118,16 +116,29 @@ class ChatManager:
         if not self.bots_folder.exists():
             return []
 
+        metadata = {}
+        for chat in self._load_chats_list():
+            chat_id = chat.get("id")
+            if chat_id:
+                metadata[chat_id] = chat
+
         chats = []
         for bot_dir in self.bots_folder.iterdir():
             if not bot_dir.is_dir():
                 continue
             chats.extend(self._scan_bot_chats(bot_dir.name))
 
-        chats.sort(key=lambda x: x.get("last_updated", ""), reverse=True)
+        for chat in chats:
+            stored = metadata.get(chat.get("id"), {})
+            if stored.get("last_opened"):
+                chat["last_opened"] = stored.get("last_opened")
+            elif not chat.get("last_opened"):
+                chat["last_opened"] = chat.get("last_updated", "")
+
+        chats.sort(key=lambda x: x.get("last_opened") or x.get("last_updated", ""), reverse=True)
         return chats
             
-    def create_chat(self, bot_name, title=None):
+    def create_chat(self, bot_name, title=None, persona_name=None, iam_set=None):
         """Create a new chat conversation in Bots/{BotName}/Chat{ChatName}/"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
@@ -146,17 +157,17 @@ class ChatManager:
             "title": title,
             "created": timestamp,
             "last_updated": timestamp,
+            "last_opened": datetime.now().strftime("%Y%m%d_%H%M%S_%f"),
             "message_count": 0,
             "chat_folder": str(chat_folder)
         }
         
-        # Add to chats list metadata if it exists
-        if self.chats_list_file.exists():
-            chats_list = self._load_chats_list()
-            chats_list.append(chat_info)
-            self._save_chats_list(chats_list)
+        # Add to chats list metadata
+        chats_list = self._load_chats_list()
+        chats_list.append(chat_info)
+        self._save_chats_list(chats_list)
         
-        iam_messages = self._load_bot_iam_messages(bot_name)
+        iam_messages = self._load_bot_iam_messages(bot_name, persona_name, iam_set)
         self.current_chat_id = chat_id
         self.current_chat_messages = iam_messages
         self.current_bot_name = bot_name
@@ -168,13 +179,61 @@ class ChatManager:
         print(f"[ChatManager] Created chat '{chat_id}' at {chat_folder}")
         return chat_info
 
-    def _load_bot_iam_messages(self, bot_name):
+    def _expand_macros(self, text, bot_name, persona_name=None):
+        if text is None:
+            return ""
+        resolved_persona = (persona_name or "User").strip() or "User"
+        resolved_bot = (bot_name or "Bot").strip() or "Bot"
+        return (
+            str(text)
+            .replace("{{user}}", resolved_persona)
+            .replace("{{char}}", resolved_bot)
+        )
+
+    def _resolve_bot_iam_folder(self, bot_name, iam_set=None):
+        if not bot_name:
+            return None
+
+        bot_folder = self.bots_folder / bot_name
+        iams_root = bot_folder / "IAMs"
+        legacy_folder = bot_folder / "IAM"
+
+        target_set = (iam_set or "").strip()
+        if not target_set:
+            config_file = bot_folder / "config.json"
+            if config_file.exists():
+                try:
+                    with open(config_file, 'r', encoding='utf-8') as f:
+                        config = json.load(f)
+                    target_set = (config.get("active_iam_set") or "").strip()
+                except Exception:
+                    target_set = ""
+        if not target_set:
+            target_set = "IAM_1"
+
+        if iams_root.exists():
+            candidate = iams_root / target_set
+            if candidate.exists() and candidate.is_dir():
+                return candidate
+
+        if target_set == "IAM_1" and legacy_folder.exists() and legacy_folder.is_dir():
+            if list(legacy_folder.glob("*.txt")):
+                return legacy_folder
+
+        if iams_root.exists():
+            set_dirs = [folder for folder in iams_root.iterdir() if folder.is_dir()]
+            if set_dirs:
+                return sorted(set_dirs)[0]
+
+        return legacy_folder if legacy_folder.exists() and legacy_folder.is_dir() else None
+
+    def _load_bot_iam_messages(self, bot_name, persona_name=None, iam_set=None):
         """Load bot-level IAM messages and return as chat messages"""
         if not bot_name:
             return []
 
-        iam_folder = self.bots_folder / bot_name / "IAM"
-        if not iam_folder.exists():
+        iam_folder = self._resolve_bot_iam_folder(bot_name, iam_set)
+        if iam_folder is None or not iam_folder.exists():
             return []
 
         messages = []
@@ -186,7 +245,7 @@ class ChatManager:
             if content.strip():
                 messages.append({
                     "role": "assistant",
-                    "content": content,
+                    "content": self._expand_macros(content, bot_name, persona_name),
                     "timestamp": datetime.now().isoformat()
                 })
         return messages
@@ -290,6 +349,28 @@ class ChatManager:
         self.current_chat_id = chat_id
         self.current_chat_messages = messages
         self.current_bot_name = bot_name
+
+        opened_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        chats_list = self._load_chats_list()
+        changed = False
+        for entry in chats_list:
+            if entry.get("id") == chat_id:
+                entry["last_opened"] = opened_timestamp
+                changed = True
+                break
+        if not changed:
+            chat_title, created = self._parse_chat_folder_name(chat_id)
+            chats_list.append({
+                "id": chat_id,
+                "bot": bot_name,
+                "title": chat_title,
+                "created": created or opened_timestamp,
+                "last_updated": opened_timestamp,
+                "last_opened": opened_timestamp,
+                "message_count": len(messages),
+                "chat_folder": str(chat_folder)
+            })
+        self._save_chats_list(chats_list)
         
         print(f"[ChatManager] Loaded chat '{chat_id}' with {len(messages)} messages")
         return messages
@@ -399,6 +480,34 @@ class ChatManager:
             self._save_chats_list(chats_list)
         
         return True
+
+    def switch_chat_iam_set(self, chat_id, bot_name, iam_set, persona_name=None):
+        """Switch initial IAM set for a chat before the first user message."""
+        if not chat_id or not bot_name:
+            return None
+
+        messages = self.load_chat(chat_id, bot_name)
+        if messages is None:
+            return None
+
+        if any((msg or {}).get("role") == "user" for msg in messages):
+            return None
+
+        iam_messages = self._load_bot_iam_messages(bot_name, persona_name, iam_set)
+        self.current_chat_id = chat_id
+        self.current_bot_name = bot_name
+        self.current_chat_messages = iam_messages
+        self._save_chat_messages(chat_id, iam_messages, bot_name)
+
+        chats_list = self._load_chats_list()
+        for chat_info in chats_list:
+            if chat_info.get("id") == chat_id:
+                chat_info["last_updated"] = datetime.now().strftime("%Y%m%d_%H%M%S")
+                chat_info["message_count"] = len(iam_messages)
+                break
+        self._save_chats_list(chats_list)
+
+        return iam_messages
         
     def get_all_chats(self):
         """Get a list of all chats"""
@@ -417,8 +526,8 @@ class ChatManager:
         if not bot_chats:
             return None
             
-        # Sort by last_updated descending to get the most recent
-        bot_chats.sort(key=lambda x: x.get("last_updated", ""), reverse=True)
+        # Sort by last_opened first, then last_updated
+        bot_chats.sort(key=lambda x: x.get("last_opened") or x.get("last_updated", ""), reverse=True)
         return bot_chats[0]
 
     def get_last_chat_any_bot(self):
@@ -426,8 +535,8 @@ class ChatManager:
         all_chats = self.get_all_chats()
         if not all_chats:
             return None
-        # Sort by last_updated descending to get the most recent
-        all_chats.sort(key=lambda x: x.get("last_updated", ""), reverse=True)
+        # Sort by last_opened first, then last_updated
+        all_chats.sort(key=lambda x: x.get("last_opened") or x.get("last_updated", ""), reverse=True)
         return all_chats[0]
         
     def load_last_chat_for_bot(self, bot_name):
@@ -466,3 +575,21 @@ class ChatManager:
             
         print(f"[ChatManager] Deleted chat metadata '{chat_id}'")
         return True
+
+    def delete_chats_for_bot(self, bot_name):
+        """Remove all chat metadata/state for a deleted bot."""
+        if not bot_name:
+            return False
+
+        chats_list = self._load_chats_list()
+        filtered = [chat for chat in chats_list if chat.get("bot") != bot_name]
+        changed = len(filtered) != len(chats_list)
+        if changed:
+            self._save_chats_list(filtered)
+
+        if self.current_bot_name == bot_name:
+            self.current_bot_name = None
+            self.current_chat_id = None
+            self.current_chat_messages = []
+
+        return changed

@@ -1,12 +1,12 @@
 {
-  "theme": "rose",
+  "theme": "default",
   "enable_animations": true,
-  "ui_font_size": 16,
+  "ui_font_size": 14,
   "chat_font_size": 20,
   "console_width": 980,
   "console_height": 620,
   "max_context_messages": 20,
-  "temperature": 1.9,
+  "temperature": 0.7,
   "max_tokens": 2048,
   "api_provider": "localhost",
   "api_key": "",
@@ -17,5 +17,5 @@
   "gui_port": 5067,
   "auto_load_last_chat": true,
   "show_message_timestamps": true,
-  "debug_mode": true
+  "debug_mode": false
 }

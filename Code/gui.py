@@ -265,6 +265,9 @@ def _build_handler(callbacks):
 						elif action == 'update' and callbacks.get('on_bot_update'):
 							result = callbacks['on_bot_update'](data)
 							response_data = json.dumps(result or {})
+						elif action == 'delete' and callbacks.get('on_bot_delete'):
+							result = callbacks['on_bot_delete'](data.get('name'))
+							response_data = json.dumps(result or {})
 						else:
 							response_data = json.dumps([])
 					else:
@@ -345,8 +348,14 @@ def _build_handler(callbacks):
 						data = json.loads(body.decode('utf-8'))
 						action = data.get('action', 'create')
 						if action == 'create' and callbacks.get('on_chat_create'):
-							result = callbacks['on_chat_create'](data.get('bot_name'), data.get('title'))
+							result = callbacks['on_chat_create'](data.get('bot_name'), data.get('title'), data.get('persona_name'), data.get('iam_set'))
 							response_data = json.dumps(result or {})
+						elif action == 'delete' and callbacks.get('on_chat_delete'):
+							result = callbacks['on_chat_delete'](data.get('chat_id'))
+							response_data = json.dumps(result or {"success": False})
+						elif action == 'switch_iam' and callbacks.get('on_chat_switch_iam'):
+							result = callbacks['on_chat_switch_iam'](data.get('chat_id'), data.get('bot_name'), data.get('iam_set'), data.get('persona_name'))
+							response_data = json.dumps(result or {"success": False})
 						else:
 							response_data = json.dumps({})
 					else:
@@ -543,8 +552,8 @@ def _build_handler(callbacks):
 	return GuiHandler
 
 
-def start_gui_server(on_message=None, on_bot_list=None, on_bot_select=None, on_bot_create=None, on_bot_update=None, on_bot_iam=None, on_bot_images=None,
-                     on_chat_list=None, on_chat_create=None, on_get_last_chat=None, on_load_chat=None, on_settings_get=None, 
+def start_gui_server(on_message=None, on_bot_list=None, on_bot_select=None, on_bot_create=None, on_bot_update=None, on_bot_delete=None, on_bot_iam=None, on_bot_images=None,
+                     on_chat_list=None, on_chat_create=None, on_chat_delete=None, on_chat_switch_iam=None, on_get_last_chat=None, on_load_chat=None, on_settings_get=None, 
 					 on_settings_update=None, on_settings_reset=None, on_settings_test=None, on_personas_list=None, on_persona_select=None, 
 					 on_persona_create=None, on_persona_update=None, on_persona_images=None):
 	callbacks = {
@@ -553,10 +562,13 @@ def start_gui_server(on_message=None, on_bot_list=None, on_bot_select=None, on_b
 		'on_bot_select': on_bot_select,
 		'on_bot_create': on_bot_create,
 		'on_bot_update': on_bot_update,
+		'on_bot_delete': on_bot_delete,
 		'on_bot_iam': on_bot_iam,
 		'on_bot_images': on_bot_images,
 		'on_chat_list': on_chat_list,
 		'on_chat_create': on_chat_create,
+		'on_chat_delete': on_chat_delete,
+		'on_chat_switch_iam': on_chat_switch_iam,
 		'on_get_last_chat': on_get_last_chat,
 		'on_load_chat': on_load_chat,
 		'on_settings_get': on_settings_get,

@@ -72,7 +72,7 @@ function showPersonaEditor(persona) {
 	const iconContent = persona.icon_art ? '' : `<div style="font-size: 24px;">${initial}</div>`;
 	
 	editor.innerHTML = `
-		<div class="editor-grid">
+		<div class="editor-grid masonry-grid">
 			<div class="editor-section">
 				<h3>Persona Details</h3>
 				<div class="form-group">
@@ -160,6 +160,8 @@ function showPersonaEditor(persona) {
 		</div>
 	`;
 	messagesContainer.appendChild(editor);
+	makeSectionsCollapsible(editor, '.editor-section', `persona-edit:${persona.id || persona.name || 'unknown'}`);
+	scheduleMasonryRefresh(editor);
 	
 	// Load images
 	loadPersonaImages(persona);

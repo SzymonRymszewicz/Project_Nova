@@ -42,6 +42,7 @@ messageInput.addEventListener('keydown', e => {
 		sendMessage();
 	}
 });
+messageInput.addEventListener('input', autoResizeMessageInput);
 navItems.forEach(item => {
 	item.addEventListener('click', () => {
 		navItems.forEach(i => i.classList.remove('active'));
@@ -50,5 +51,6 @@ navItems.forEach(item => {
 	});
 });
 
+resetMessageInputHeight();
 showView('last-chat');
 initSettings();

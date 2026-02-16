@@ -73,7 +73,7 @@ function showSettings() {
 			const temp = settings.temperature || 0.7;
 			const tokens = settings.max_tokens || 2048;
 			const uiFontSize = settings.ui_font_size ?? settings.font_size ?? 12;
-			const chatFontSize = settings.chat_font_size ?? settings.font_size ?? 12;
+			const chatFontSize = settings.chat_font_size ?? settings.font_size ?? 20;
 			const providerValue = settings.api_provider || 'localhost';
 			const apiBaseUrlValue = settings.api_base_url || getDefaultApiBaseUrl(providerValue);
 			const modelValue = settings.model ?? getDefaultModel(providerValue);
@@ -95,8 +95,10 @@ function showSettings() {
 			lastSavedSettings = { ...normalizedSettings };
 			settingsDraft = { ...normalizedSettings };
 			const modelPlaceholder = providerValue === 'localhost' ? 'Loaded model name in LM Studio' : 'Model name';
-			container.innerHTML = `<div class="settings-grid"><div class="settings-group"><h3>Generation</h3><div class="setting-item"><label class="setting-label">Temperature</label><input type="range" class="setting-input" min="0" max="2" step="0.1" value="${temp}" id="temp"></div><div class="setting-item"><label class="setting-label">Max Tokens</label><input type="number" class="setting-input" value="${tokens}" id="tokens"></div></div><div class="settings-group"><h3>API Client</h3><div class="setting-item"><label class="setting-label">API Provider</label><select class="setting-select" id="provider"><option value="localhost" ${providerValue === 'localhost' ? 'selected' : ''}>Localhost (LM Studio)</option><option value="openai" ${providerValue === 'openai' ? 'selected' : ''}>OpenAI</option></select></div><div class="setting-item"><label class="setting-label">API Base URL</label><input type="text" class="setting-input" value="${apiBaseUrlValue}" id="api-base-url"></div><div class="setting-item"><label class="setting-label">Model</label><input type="text" class="setting-input" value="${modelValue}" placeholder="${modelPlaceholder}" id="model"></div><div class="setting-item"><label class="setting-label">API Key</label><input type="password" class="setting-input" placeholder="Enter API key" id="apikey" value="${apiKeyValue}"></div><div class="setting-item api-test-row"><button class="btn btn-secondary" id="api-test-btn" type="button">Test Connection</button><div class="api-test-result" id="api-test-result"></div></div></div><div class="settings-group"><h3>Style</h3><div class="setting-item"><label class="setting-label">Theme</label><select class="setting-select" id="theme"></select></div><div class="setting-item"><label class="setting-label">UI Font Size</label><input type="number" class="setting-input" value="${uiFontSize}" id="ui-fontsize"></div><div class="setting-item"><label class="setting-label">Chat Font Size</label><input type="number" class="setting-input" value="${chatFontSize}" id="chat-fontsize"></div></div><div class="settings-group"><h3>Other</h3><div class="setting-item"><label><input type="checkbox" id="autosave" ${settings.auto_save_chats ? 'checked' : ''} > Auto-save Chats</label></div><div class="setting-item"><label><input type="checkbox" id="autoload" ${settings.auto_load_last_chat ? 'checked' : ''} > Auto-load Last Chat</label></div><div class="setting-item"><label><input type="checkbox" id="showtimestamps" ${showTimestamps ? 'checked' : ''} > Show Message Timestamps</label></div><div class="setting-item"><label><input type="checkbox" id="debugmode" ${debugMode ? 'checked' : ''} > Enable Debug Mode</label></div><div class="settings-actions"><button class="btn btn-primary" onclick="saveSettings()" style="margin-top:12px;">Save Settings</button><button class="btn btn-secondary" onclick="resetSettings()" style="margin-top:12px;">Restore Defaults</button></div></div></div>`;
+			container.innerHTML = `<div class="settings-grid masonry-grid"><div class="settings-group"><h3>Generation</h3><div class="setting-item"><label class="setting-label">Temperature</label><input type="range" class="setting-input" min="0" max="2" step="0.1" value="${temp}" id="temp"></div><div class="setting-item"><label class="setting-label">Max Tokens</label><input type="number" class="setting-input" value="${tokens}" id="tokens"></div></div><div class="settings-group"><h3>API Client</h3><div class="setting-item"><label class="setting-label">API Provider</label><select class="setting-select" id="provider"><option value="localhost" ${providerValue === 'localhost' ? 'selected' : ''}>Localhost (LM Studio)</option><option value="openai" ${providerValue === 'openai' ? 'selected' : ''}>OpenAI</option></select></div><div class="setting-item"><label class="setting-label">API Base URL</label><input type="text" class="setting-input" value="${apiBaseUrlValue}" id="api-base-url"></div><div class="setting-item"><label class="setting-label">Model</label><input type="text" class="setting-input" value="${modelValue}" placeholder="${modelPlaceholder}" id="model"></div><div class="setting-item"><label class="setting-label">API Key</label><input type="password" class="setting-input" placeholder="Enter API key" id="apikey" value="${apiKeyValue}"></div><div class="setting-item api-test-row"><button class="btn btn-secondary" id="api-test-btn" type="button">Test Connection</button><div class="api-test-result" id="api-test-result"></div></div></div><div class="settings-group"><h3>Style</h3><div class="setting-item"><label class="setting-label">Theme</label><select class="setting-select" id="theme"></select></div><div class="setting-item"><label class="setting-label">UI Size</label><input type="number" class="setting-input" value="${uiFontSize}" id="ui-fontsize"></div><div class="setting-item"><label class="setting-label">Chat Font Size</label><input type="number" class="setting-input" value="${chatFontSize}" id="chat-fontsize"></div></div><div class="settings-group"><h3>Other</h3><div class="setting-item"><label><input type="checkbox" id="autosave" ${settings.auto_save_chats ? 'checked' : ''} > Auto-save Chats</label></div><div class="setting-item"><label><input type="checkbox" id="autoload" ${settings.auto_load_last_chat ? 'checked' : ''} > Auto-load Last Chat</label></div><div class="setting-item"><label><input type="checkbox" id="showtimestamps" ${showTimestamps ? 'checked' : ''} > Show Message Timestamps</label></div><div class="setting-item"><label><input type="checkbox" id="debugmode" ${debugMode ? 'checked' : ''} > Enable Debug Mode</label></div><div class="settings-actions"><button class="btn btn-primary" onclick="saveSettings()" style="margin-top:12px;">Save Settings</button><button class="btn btn-secondary" onclick="resetSettings()" style="margin-top:12px;">Restore Defaults</button></div></div></div>`;
 			messagesContainer.appendChild(container);
+			makeSectionsCollapsible(container, '.settings-group', 'settings');
+			scheduleMasonryRefresh(container);
 			loadThemes(settings.theme || 'default');
 			bindSettingsDraft();
 			applyFontSizes(uiFontSize, chatFontSize);
@@ -276,10 +278,50 @@ function loadThemes(selectedTheme) {
 		});
 }
 
-function updateSettings(settings) {
+function normalizeAndApplySettingsState(settings) {
+	const normalized = {
+		...lastSavedSettings,
+		...settings
+	};
+	const providerValue = normalized.api_provider || 'localhost';
+	normalized.api_provider = providerValue;
+	normalized.api_base_url = normalized.api_base_url || getDefaultApiBaseUrl(providerValue);
+	normalized.model = normalized.model ?? getDefaultModel(providerValue);
+	normalized.theme = normalized.theme || 'default';
+	normalized.show_message_timestamps = normalized.show_message_timestamps ?? true;
+	normalized.debug_mode = normalized.debug_mode ?? false;
+	normalized.ui_font_size = normalized.ui_font_size ?? normalized.font_size ?? 12;
+	normalized.chat_font_size = normalized.chat_font_size ?? normalized.font_size ?? 20;
+
+	lastSavedTheme = normalized.theme;
+	lastSavedSettings = { ...normalized };
+	settingsDraft = { ...normalized };
+	applyTheme(lastSavedTheme);
+	applyFontSizes(normalized.ui_font_size, normalized.chat_font_size);
+	updateBotPanel();
+}
+
+function saveSettingsPatch(settingsPatch, showAlert = true) {
+	const payload = { ...settingsPatch };
+	return fetch('/api/settings', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ action: 'update', settings: payload })
+	})
+		.then(r => r.json())
+		.then(() => {
+			normalizeAndApplySettingsState(payload);
+			if (showAlert) {
+				alert('Settings saved!');
+			}
+		});
+}
+
+function updateSettings(settings, options = {}) {
 	if (!settings) {
 		return;
 	}
+	const showSettingsOnMissing = options.showSettingsOnMissing ?? true;
 
 	const temp = document.getElementById('temp');
 	const tokens = document.getElementById('tokens');
@@ -296,7 +338,10 @@ function updateSettings(settings) {
 	const debugMode = document.getElementById('debugmode');
 
 	if (!temp || !tokens || !provider || !apiBaseUrl || !model || !apiKey || !theme || !uiFontSize || !chatFontSize || !autosave || !autoload || !showTimestamps || !debugMode) {
-		showSettings();
+		normalizeAndApplySettingsState(settings);
+		if (showSettingsOnMissing) {
+			showSettings();
+		}
 		return;
 	}
 
@@ -309,7 +354,7 @@ function updateSettings(settings) {
 	apiBaseUrl.value = apiBaseUrlValue;
 	apiKey.value = settings.api_key || '';
 	uiFontSize.value = settings.ui_font_size ?? settings.font_size ?? 12;
-	chatFontSize.value = settings.chat_font_size ?? settings.font_size ?? 12;
+	chatFontSize.value = settings.chat_font_size ?? settings.font_size ?? 20;
 	autosave.checked = !!settings.auto_save_chats;
 	autoload.checked = !!settings.auto_load_last_chat;
 	showTimestamps.checked = settings.show_message_timestamps ?? true;
@@ -322,11 +367,7 @@ function updateSettings(settings) {
 	if (theme) {
 		loadThemes(settings.theme || 'default');
 	}
-	lastSavedTheme = settings.theme || 'default';
-	lastSavedSettings = { ...settings, api_provider: providerValue, api_base_url: apiBaseUrlValue, show_message_timestamps: showTimestamps.checked, debug_mode: debugMode.checked };
-	settingsDraft = { ...lastSavedSettings };
-	applyTheme(lastSavedTheme);
-	applyFontSizes(settings.ui_font_size ?? settings.font_size ?? 12, settings.chat_font_size ?? settings.font_size ?? 12);
+	normalizeAndApplySettingsState({ ...settings, api_provider: providerValue, api_base_url: apiBaseUrlValue, show_message_timestamps: showTimestamps.checked, debug_mode: debugMode.checked });
 }
 
 function saveSettings() {
@@ -345,21 +386,7 @@ function saveSettings() {
 		show_message_timestamps: document.getElementById('showtimestamps').checked,
 		debug_mode: document.getElementById('debugmode').checked
 	};
-	fetch('/api/settings', {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ action: 'update', settings: settings })
-	})
-		.then(r => r.json())
-		.then(() => {
-			lastSavedTheme = settings.theme || 'default';
-			lastSavedSettings = { ...settings };
-			settingsDraft = { ...settings };
-			applyTheme(lastSavedTheme);
-			applyFontSizes(settings.ui_font_size, settings.chat_font_size);
-			updateBotPanel();
-			alert('Settings saved!');
-		});
+	saveSettingsPatch(settings, true);
 }
 
 function resetSettings() {
@@ -373,7 +400,10 @@ function resetSettings() {
 			.then(data => {
 				if (data) {
 					alert('Settings restored to defaults!');
-					updateSettings(data);
+					clearAllCollapsedStates();
+					updateSettings(data, { showSettingsOnMissing: true });
+					expandAllCollapsibleSections(messagesContainer);
+					scheduleMasonryRefresh(messagesContainer);
 				} else {
 					alert('Failed to reset settings');
 				}
@@ -388,7 +418,7 @@ function initSettings() {
 			lastSavedTheme = settings.theme || 'default';
 			lastSavedSettings = { ...settings };
 			settingsDraft = { ...settings };
-			applyFontSizes(settings.ui_font_size ?? settings.font_size ?? 12, settings.chat_font_size ?? settings.font_size ?? 12);
+			applyFontSizes(settings.ui_font_size ?? settings.font_size ?? 12, settings.chat_font_size ?? settings.font_size ?? 20);
 			applyTheme(lastSavedTheme);
 			loadDefaultPersona();
 			autoLoadLastChat(settings);

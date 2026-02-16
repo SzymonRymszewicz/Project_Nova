@@ -15,6 +15,28 @@ class BotManager:
         self.bots_folder = Path(__file__).parent / bots_folder
         self.current_bot = None
         self.bots_cache = {}
+
+    def _default_prompt_order(self):
+        return ["scenario", "core", "iam"]
+
+    def _default_iam_set(self):
+        return "IAM_1"
+
+    def _normalize_prompt_order(self, prompt_order):
+        default_order = self._default_prompt_order()
+        if not isinstance(prompt_order, list):
+            return default_order.copy()
+
+        normalized = []
+        for item in prompt_order:
+            if item in default_order and item not in normalized:
+                normalized.append(item)
+
+        for item in default_order:
+            if item not in normalized:
+                normalized.append(item)
+
+        return normalized
         
     def discover_bots(self):
         """Discover all available bots in the Bots folder"""
@@ -33,7 +55,7 @@ class BotManager:
                 # Check if core.txt exists
                 if core_file.exists():
                     # Try to load config for additional metadata
-                    bot_config = {"description": "", "cover_art": "", "icon_art": "", "cover_art_fit": {}, "icon_fit": {}}
+                    bot_config = {"description": "", "cover_art": "", "icon_art": "", "cover_art_fit": {}, "icon_fit": {}, "prompt_order": self._default_prompt_order(), "active_iam_set": self._default_iam_set()}
                     if config_file.exists():
                         try:
                             with open(config_file, 'r', encoding='utf-8') as f:
@@ -55,6 +77,7 @@ class BotManager:
                         "icon_art": icon_art or "",
                         "cover_art_fit": cover_fit,
                         "icon_fit": icon_fit,
+                        "active_iam_set": bot_config.get("active_iam_set", self._default_iam_set()),
                         "short_description": bot_config.get("short_description", bot_config.get("description", "")[:100])
                     })
                     
@@ -64,6 +87,7 @@ class BotManager:
         """Load a specific bot by name"""
         bot_path = self.bots_folder / bot_name
         core_file = bot_path / "core.txt"
+        scenario_file = bot_path / "scenario.txt"
         config_file = bot_path / "config.json"
         
         if not bot_path.exists():
@@ -81,9 +105,17 @@ class BotManager:
         except Exception as e:
             print(f"[BotManager] Error reading core file for '{bot_name}': {e}")
             return None
+
+        scenario_data = ""
+        if scenario_file.exists():
+            try:
+                with open(scenario_file, 'r', encoding='utf-8') as f:
+                    scenario_data = f.read()
+            except Exception as e:
+                print(f"[BotManager] Error reading scenario file for '{bot_name}': {e}")
             
         # Try to load config for additional metadata
-        bot_config = {"description": "", "cover_art": "", "icon_art": "", "short_description": "", "cover_art_fit": {}, "icon_fit": {}}
+        bot_config = {"description": "", "cover_art": "", "icon_art": "", "short_description": "", "cover_art_fit": {}, "icon_fit": {}, "prompt_order": self._default_prompt_order(), "active_iam_set": self._default_iam_set()}
         if config_file.exists():
             try:
                 with open(config_file, 'r', encoding='utf-8') as f:
@@ -96,18 +128,25 @@ class BotManager:
         cover_fit = self._normalize_fit(bot_config.get("cover_art_fit"))
         icon_fit = self._normalize_fit(bot_config.get("icon_fit"))
             
+        active_iam_set = bot_config.get("active_iam_set", self._default_iam_set())
+
         bot_info = {
             "name": bot_name,
             "path": str(bot_path),
             "core_file": str(core_file),
             "core_data": core_data,
+            "scenario_file": str(scenario_file),
+            "scenario_data": scenario_data,
             "description": bot_config.get("description", ""),
             "cover_art": cover_art or "",
             "icon_art": icon_art or "",
             "cover_art_fit": cover_fit,
             "icon_fit": icon_fit,
+            "prompt_order": self._normalize_prompt_order(bot_config.get("prompt_order")),
+            "active_iam_set": active_iam_set,
             "short_description": bot_config.get("short_description", bot_config.get("description", "")[:100]),
-            "iam_folder": str(bot_path / "IAM"),
+            "iam_folder": str(self._resolve_iam_folder(bot_name, active_iam_set)),
+            "iams_folder": str(self._get_iams_root(bot_name)),
             "stm_folder": str(bot_path / "STM"),
             "mtm_folder": str(bot_path / "MTM"),
             "ltm_folder": str(bot_path / "LTM")
@@ -125,10 +164,55 @@ class BotManager:
     
     def create_bot(self, bot_name, core_data=""):
         """Create a new bot with the specified name"""
+        safe_name = re.sub(r"[^a-zA-Z0-9._-]", "_", (bot_name or "").strip())
+        if not safe_name:
+            print("[BotManager] Bot name is required")
+            return None
+
+        bot_name = safe_name
         bot_path = self.bots_folder / bot_name
         
         if bot_path.exists():
             print(f"[BotManager] Bot '{bot_name}' already exists")
+            return None
+
+        try:
+            # Create bot directory structure
+            bot_path.mkdir(parents=True, exist_ok=True)
+            (bot_path / "IAM").mkdir(exist_ok=True)
+            (bot_path / "IAMs").mkdir(exist_ok=True)
+            (bot_path / "IAMs" / self._default_iam_set()).mkdir(parents=True, exist_ok=True)
+            (bot_path / "STM").mkdir(exist_ok=True)
+            (bot_path / "MTM").mkdir(exist_ok=True)
+            (bot_path / "LTM").mkdir(exist_ok=True)
+            (bot_path / "Images").mkdir(exist_ok=True)
+            (bot_path / "Coverart").mkdir(exist_ok=True)
+
+            # Create core and scenario files
+            core_file = bot_path / "core.txt"
+            scenario_file = bot_path / "scenario.txt"
+            core_file.write_text(core_data or "", encoding='utf-8')
+            scenario_file.write_text("", encoding='utf-8')
+
+            # Create default config
+            config_file = bot_path / "config.json"
+            config_payload = {
+                "description": "",
+                "short_description": "",
+                "cover_art": "",
+                "icon_art": "",
+                "cover_art_fit": {"size": 100, "x": 50, "y": 50},
+                "icon_fit": {"size": 100, "x": 50, "y": 50},
+                "prompt_order": self._default_prompt_order(),
+                "active_iam_set": self._default_iam_set()
+            }
+            with open(config_file, 'w', encoding='utf-8') as f:
+                json.dump(config_payload, f, indent=2)
+
+            print(f"[BotManager] Created bot '{bot_name}'")
+            return self.load_bot(bot_name)
+        except Exception as e:
+            print(f"[BotManager] Error creating bot '{bot_name}': {e}")
             return None
 
     def rename_bot(self, bot_name, new_name):
@@ -154,6 +238,7 @@ class BotManager:
                 bot_info["path"] = str(target_path)
                 bot_info["core_file"] = str(target_path / "core.txt")
                 bot_info["iam_folder"] = str(target_path / "IAM")
+                bot_info["iams_folder"] = str(target_path / "IAMs")
                 bot_info["stm_folder"] = str(target_path / "STM")
                 bot_info["mtm_folder"] = str(target_path / "MTM")
                 bot_info["ltm_folder"] = str(target_path / "LTM")
@@ -163,6 +248,7 @@ class BotManager:
                 self.current_bot["path"] = str(target_path)
                 self.current_bot["core_file"] = str(target_path / "core.txt")
                 self.current_bot["iam_folder"] = str(target_path / "IAM")
+                self.current_bot["iams_folder"] = str(target_path / "IAMs")
                 self.current_bot["stm_folder"] = str(target_path / "STM")
                 self.current_bot["mtm_folder"] = str(target_path / "MTM")
                 self.current_bot["ltm_folder"] = str(target_path / "LTM")
@@ -179,6 +265,7 @@ class BotManager:
 
         bot_path = self.bots_folder / bot_name
         core_file = bot_path / "core.txt"
+        scenario_file = bot_path / "scenario.txt"
         config_file = bot_path / "config.json"
 
         if not bot_path.exists() or not core_file.exists():
@@ -192,6 +279,14 @@ class BotManager:
                     f.write(core_data)
             except Exception as e:
                 print(f"[BotManager] Error writing core for '{bot_name}': {e}")
+
+        scenario_data = updates.get("scenario_data")
+        if scenario_data is not None:
+            try:
+                with open(scenario_file, 'w', encoding='utf-8') as f:
+                    f.write(scenario_data)
+            except Exception as e:
+                print(f"[BotManager] Error writing scenario for '{bot_name}': {e}")
 
         config = {}
         if config_file.exists():
@@ -213,6 +308,10 @@ class BotManager:
             config["icon_fit"] = updates.get("icon_fit", {})
         if updates.get("short_description") is not None:
             config["short_description"] = updates.get("short_description", "")
+        if updates.get("prompt_order") is not None:
+            config["prompt_order"] = self._normalize_prompt_order(updates.get("prompt_order"))
+        if updates.get("active_iam_set") is not None:
+            config["active_iam_set"] = self._sanitize_iam_set_name(updates.get("active_iam_set"))
 
         try:
             with open(config_file, 'w', encoding='utf-8') as f:
@@ -340,16 +439,129 @@ class BotManager:
             icon_url = f"/Bots/{bot_name}/Images/{safe_name}"
         return self.update_bot(bot_name, {"icon_art": icon_url})
 
-    def _get_iam_folder(self, bot_name):
+    def _get_iams_root(self, bot_name):
+        bot_path = self.bots_folder / bot_name
+        iams_folder = bot_path / "IAMs"
+        iams_folder.mkdir(parents=True, exist_ok=True)
+        return iams_folder
+
+    def _get_legacy_iam_folder(self, bot_name):
         bot_path = self.bots_folder / bot_name
         iam_folder = bot_path / "IAM"
         iam_folder.mkdir(parents=True, exist_ok=True)
         return iam_folder
 
-    def list_iam(self, bot_name):
+    def _sanitize_iam_set_name(self, iam_set):
+        safe_name = re.sub(r"[^a-zA-Z0-9._-]", "_", (iam_set or "").strip())
+        return safe_name or self._default_iam_set()
+
+    def _extract_iam_index(self, iam_set_name):
+        match = re.match(r"^IAM_(\d+)$", iam_set_name)
+        if not match:
+            return None
+        try:
+            return int(match.group(1))
+        except Exception:
+            return None
+
+    def _sort_iam_set_names(self, set_names):
+        return sorted(set_names, key=lambda name: ((self._extract_iam_index(name) is None), self._extract_iam_index(name) or 0, name))
+
+    def _resolve_iam_folder(self, bot_name, iam_set=None):
+        set_name = self._sanitize_iam_set_name(iam_set or self._default_iam_set())
+        iams_root = self._get_iams_root(bot_name)
+        candidate = iams_root / set_name
+        if candidate.exists() and candidate.is_dir():
+            return candidate
+
+        legacy = self._get_legacy_iam_folder(bot_name)
+        if set_name == self._default_iam_set() and legacy.exists():
+            legacy_files = list(legacy.glob("*.txt"))
+            if legacy_files:
+                return legacy
+
+        candidate.mkdir(parents=True, exist_ok=True)
+        return candidate
+
+    def list_iam_sets(self, bot_name):
         if not bot_name:
             return []
-        iam_folder = self._get_iam_folder(bot_name)
+
+        iams_root = self._get_iams_root(bot_name)
+        set_names = [folder.name for folder in iams_root.iterdir() if folder.is_dir()]
+
+        legacy = self._get_legacy_iam_folder(bot_name)
+        if list(legacy.glob("*.txt")) and self._default_iam_set() not in set_names:
+            set_names.append(self._default_iam_set())
+
+        if not set_names:
+            default_set = self._default_iam_set()
+            (iams_root / default_set).mkdir(parents=True, exist_ok=True)
+            set_names = [default_set]
+
+        return self._sort_iam_set_names(set_names)
+
+    def create_iam_set(self, bot_name, iam_set=None):
+        if not bot_name:
+            return None
+
+        iams_root = self._get_iams_root(bot_name)
+        existing = self.list_iam_sets(bot_name)
+        if iam_set:
+            target_name = self._sanitize_iam_set_name(iam_set)
+            target = iams_root / target_name
+            target.mkdir(parents=True, exist_ok=True)
+            return target_name
+
+        numeric_indexes = [self._extract_iam_index(name) for name in existing]
+        numeric_indexes = [idx for idx in numeric_indexes if idx is not None]
+        next_index = (max(numeric_indexes) + 1) if numeric_indexes else 1
+        target_name = f"IAM_{next_index}"
+        (iams_root / target_name).mkdir(parents=True, exist_ok=True)
+        return target_name
+
+    def delete_iam_set(self, bot_name, iam_set):
+        if not bot_name or not iam_set:
+            return False
+
+        set_name = self._sanitize_iam_set_name(iam_set)
+        if set_name == self._default_iam_set():
+            return False
+
+        iams_root = self._get_iams_root(bot_name)
+        target = iams_root / set_name
+        if not target.exists() or not target.is_dir():
+            return False
+
+        try:
+            shutil.rmtree(target)
+        except Exception as e:
+            print(f"[BotManager] Error deleting IAM set '{set_name}' for '{bot_name}': {e}")
+            return False
+
+        bot_path = self.bots_folder / bot_name
+        config_file = bot_path / "config.json"
+        if config_file.exists():
+            try:
+                with open(config_file, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+            except Exception:
+                config = {}
+            if config.get("active_iam_set") == set_name:
+                remaining_sets = self.list_iam_sets(bot_name)
+                config["active_iam_set"] = remaining_sets[0] if remaining_sets else self._default_iam_set()
+                try:
+                    with open(config_file, 'w', encoding='utf-8') as f:
+                        json.dump(config, f, indent=2)
+                except Exception:
+                    pass
+
+        return True
+
+    def list_iam(self, bot_name, iam_set=None):
+        if not bot_name:
+            return []
+        iam_folder = self._resolve_iam_folder(bot_name, iam_set)
         items = []
         for iam_file in sorted(iam_folder.glob("*.txt")):
             try:
@@ -359,13 +571,49 @@ class BotManager:
             items.append({"id": iam_file.name, "content": content})
         return items
 
-    def add_iam(self, bot_name, content):
+    def replace_iam(self, bot_name, contents, iam_set=None):
+        if not bot_name:
+            return False
+        iam_folder = self._resolve_iam_folder(bot_name, iam_set)
+        items = contents if isinstance(contents, list) else []
+
+        try:
+            for iam_file in iam_folder.glob("*.txt"):
+                iam_file.unlink()
+        except Exception as e:
+            print(f"[BotManager] Error clearing IAM set for '{bot_name}': {e}")
+            return False
+
+        for index, content in enumerate(items):
+            text = str(content or "")
+            if not text.strip():
+                continue
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+            filename = f"iam_{timestamp}_{index:03d}.txt"
+            iam_file = iam_folder / filename
+            try:
+                iam_file.write_text(text, encoding='utf-8')
+            except Exception as e:
+                print(f"[BotManager] Error replacing IAM for '{bot_name}': {e}")
+                return False
+
+        return True
+
+    def add_iam(self, bot_name, content, iam_set=None):
         if not bot_name:
             return None
-        iam_folder = self._get_iam_folder(bot_name)
+        iam_folder = self._resolve_iam_folder(bot_name, iam_set)
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         filename = f"iam_{timestamp}.txt"
         iam_file = iam_folder / filename
+        if iam_file.exists():
+            suffix = 1
+            while True:
+                candidate = iam_folder / f"iam_{timestamp}_{suffix}.txt"
+                if not candidate.exists():
+                    iam_file = candidate
+                    break
+                suffix += 1
         try:
             iam_file.write_text(content or "", encoding='utf-8')
             return {"id": iam_file.name, "content": content or ""}
@@ -373,10 +621,10 @@ class BotManager:
             print(f"[BotManager] Error writing IAM for '{bot_name}': {e}")
             return None
 
-    def update_iam(self, bot_name, iam_id, content):
+    def update_iam(self, bot_name, iam_id, content, iam_set=None):
         if not bot_name or not iam_id:
             return False
-        iam_folder = self._get_iam_folder(bot_name)
+        iam_folder = self._resolve_iam_folder(bot_name, iam_set)
         safe_name = Path(iam_id).name
         iam_file = iam_folder / safe_name
         if not iam_file.exists():
@@ -388,10 +636,10 @@ class BotManager:
             print(f"[BotManager] Error updating IAM for '{bot_name}': {e}")
             return False
 
-    def delete_iam(self, bot_name, iam_id):
+    def delete_iam(self, bot_name, iam_id, iam_set=None):
         if not bot_name or not iam_id:
             return False
-        iam_folder = self._get_iam_folder(bot_name)
+        iam_folder = self._resolve_iam_folder(bot_name, iam_set)
         safe_name = Path(iam_id).name
         iam_file = iam_folder / safe_name
         if not iam_file.exists():

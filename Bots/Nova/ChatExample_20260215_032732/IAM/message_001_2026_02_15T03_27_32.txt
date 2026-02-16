@@ -1,8 +1,0 @@
-{
-  "user": null,
-  "assistant": {
-    "role": "assistant",
-    "content": "How can I help you today?",
-    "timestamp": "2026-02-15T03:27:32.773770"
-  }
-}

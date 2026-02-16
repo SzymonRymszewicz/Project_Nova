@@ -2,6 +2,33 @@ function showLastChat() {
 	renderCurrentChat();
 }
 
+function autoResizeMessageInput() {
+	if (!messageInput) {
+		return;
+	}
+	const computedStyle = window.getComputedStyle(messageInput);
+	const minHeight = parseFloat(computedStyle.minHeight) || 52;
+	const maxHeight = parseFloat(computedStyle.maxHeight) || 192;
+	const minSnapTolerance = 3;
+
+	messageInput.style.height = 'auto';
+	let nextHeight = Math.min(Math.max(messageInput.scrollHeight, minHeight), maxHeight);
+	if (nextHeight <= minHeight + minSnapTolerance) {
+		nextHeight = minHeight;
+	}
+	messageInput.style.height = `${nextHeight}px`;
+	messageInput.style.overflowY = messageInput.scrollHeight > maxHeight ? 'auto' : 'hidden';
+}
+
+function resetMessageInputHeight() {
+	if (!messageInput) {
+		return;
+	}
+	messageInput.style.height = '';
+	messageInput.style.overflowY = 'hidden';
+	autoResizeMessageInput();
+}
+
 function shouldShowTimestamps() {
 	if (settingsDraft && typeof settingsDraft.show_message_timestamps === 'boolean') {
 		return settingsDraft.show_message_timestamps;
@@ -36,6 +63,7 @@ function renderCurrentChat() {
 	inputArea.classList.add('visible');
 	const title = currentBotName ? currentBotName : 'Chat';
 	chatHeader.innerHTML = `<div><div class="chat-title">${title}</div><div class="chat-subtitle">Conversation</div></div>`;
+	renderChatIamHeaderPicker();
 	messagesContainer.innerHTML = '';
 	if (!currentChatMessages || currentChatMessages.length === 0) {
 		messagesContainer.innerHTML = '<div class="chat-empty">No messages in this chat yet.</div>';
@@ -45,6 +73,100 @@ function renderCurrentChat() {
 	currentChatMessages.forEach(msg => {
 		addMessage(msg.content, msg.role === 'user', msg.timestamp);
 	});
+}
+
+function renderChatIamHeaderPicker() {
+	if (!chatHeader || !currentBotName || !currentChatId) {
+		return;
+	}
+	const existingPicker = document.getElementById('chat-header-iam-picker');
+	if (existingPicker) {
+		existingPicker.remove();
+	}
+	const hasUserMessage = Array.isArray(currentChatMessages) && currentChatMessages.some(msg => (msg || {}).role === 'user');
+	if (hasUserMessage) {
+		return;
+	}
+
+	window.__novaChatIamPickerToken = (window.__novaChatIamPickerToken || 0) + 1;
+	const pickerToken = window.__novaChatIamPickerToken;
+	const botAtRender = currentBotName;
+	const chatAtRender = currentChatId;
+
+	fetch('/api/bot/iam', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ action: 'list_sets', bot_name: currentBotName })
+	})
+		.then(r => r.json())
+		.then(data => {
+			if (pickerToken !== window.__novaChatIamPickerToken || botAtRender !== currentBotName || chatAtRender !== currentChatId) {
+				return;
+			}
+			const defaultIamSet = (typeof DEFAULT_IAM_SET !== 'undefined' && DEFAULT_IAM_SET) ? DEFAULT_IAM_SET : 'IAM_1';
+			const setNames = (typeof getSortedIamSetNames === 'function')
+				? getSortedIamSetNames((data && data.sets) ? data.sets : [defaultIamSet])
+				: ((data && data.sets) || [defaultIamSet]);
+			currentChatIamSetNames = setNames;
+			if (!setNames || setNames.length <= 1) {
+				return;
+			}
+
+			if (!chatBotIamSelections[currentBotName] || !setNames.includes(chatBotIamSelections[currentBotName])) {
+				chatBotIamSelections[currentBotName] = (data && data.current_set && setNames.includes(data.current_set)) ? data.current_set : setNames[0];
+			}
+
+			const selected = chatBotIamSelections[currentBotName];
+			const numberMatch = /^IAM_(\d+)$/i.exec(selected || '');
+			const displayNumber = numberMatch ? numberMatch[1] : selected;
+
+			const picker = document.createElement('div');
+			picker.id = 'chat-header-iam-picker';
+			picker.className = 'iam-set-nav';
+			chatHeader.style.position = 'relative';
+			picker.style.position = 'absolute';
+			picker.style.left = '50%';
+			picker.style.top = '50%';
+			picker.style.transform = 'translate(-50%, -50%)';
+			picker.innerHTML = `<button type="button" class="action-btn cancel-btn" id="chat-header-iam-prev">&lt;</button><span class="iam-set-label" id="chat-header-iam-label">${displayNumber}</span><button type="button" class="action-btn cancel-btn" id="chat-header-iam-next">&gt;</button>`;
+			chatHeader.appendChild(picker);
+
+			const rotate = (direction) => {
+				const current = chatBotIamSelections[currentBotName];
+				const currentIndex = Math.max(0, setNames.indexOf(current));
+				const nextIndex = (currentIndex + direction + setNames.length) % setNames.length;
+				const nextSet = setNames[nextIndex];
+				fetch('/api/chats', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						action: 'switch_iam',
+						chat_id: currentChatId,
+						bot_name: currentBotName,
+						iam_set: nextSet,
+						persona_name: (currentPersonaInfo && currentPersonaInfo.name) ? currentPersonaInfo.name : 'User'
+					})
+				})
+					.then(r => r.json())
+					.then(result => {
+						if (!result || !result.success) {
+							return;
+						}
+						chatBotIamSelections[currentBotName] = nextSet;
+						currentChatMessages = result.messages || [];
+						renderCurrentChat();
+					});
+			};
+
+			const prevBtn = document.getElementById('chat-header-iam-prev');
+			const nextBtn = document.getElementById('chat-header-iam-next');
+			if (prevBtn) {
+				prevBtn.addEventListener('click', () => rotate(-1));
+			}
+			if (nextBtn) {
+				nextBtn.addEventListener('click', () => rotate(1));
+			}
+		});
 }
 
 function addMessage(text, isUser, timestamp) {
@@ -111,7 +233,9 @@ function sendMessage() {
 	addMessage(text, true, timestamp);
 	currentChatMessages = currentChatMessages || [];
 	currentChatMessages.push({ role: 'user', content: text, timestamp: timestamp });
+	renderCurrentChat();
 	messageInput.value = '';
+	resetMessageInputHeight();
 	fetch('/api/message', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -136,18 +260,17 @@ function autoLoadLastChat(settings) {
 	if (!settings || !settings.auto_load_last_chat) {
 		return;
 	}
-	const defaultBot = settings.default_bot || null;
-	// If no default bot, try to load the most recent chat from any bot
+	// Always load the most recent chat globally on app startup.
 	fetch('/api/last-chat', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ bot_name: defaultBot })
+		body: JSON.stringify({ bot_name: null })
 	})
 		.then(r => r.json())
 		.then(data => {
 			if (data && data.chat_info) {
 				currentChatId = data.chat_info.id;
-				currentBotName = data.chat_info.bot || defaultBot;
+				currentBotName = data.chat_info.bot || null;
 				currentChatMessages = data.messages || [];
 				// Fetch bot info for coverart
 				fetch('/api/bot/select', {

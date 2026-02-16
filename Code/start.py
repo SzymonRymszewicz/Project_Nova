@@ -146,23 +146,64 @@ class Application:
                 "cover_art_fit": payload.get("cover_art_fit"),
                 "icon_fit": payload.get("icon_fit"),
                 "short_description": payload.get("short_description"),
-                "core_data": payload.get("core_data")
+                "core_data": payload.get("core_data"),
+                "scenario_data": payload.get("scenario_data"),
+                "prompt_order": payload.get("prompt_order"),
+                "active_iam_set": payload.get("active_iam_set")
             }
             bot = self.bot_manager.update_bot(bot_name, updates)
             return {"success": bot is not None, "bot": bot}
 
+        def _on_bot_delete(bot_name):
+            if not bot_name:
+                return {"success": False, "message": "Missing bot name"}
+
+            deleted = self.bot_manager.delete_bot(bot_name)
+            if not deleted:
+                return {"success": False, "message": "Failed to delete bot"}
+
+            self.chat_manager.delete_chats_for_bot(bot_name)
+            if self.current_bot_name == bot_name:
+                self.current_bot_name = None
+
+            print(f"[GUI] Bot deleted: {bot_name}")
+            return {"success": True}
+
         def _on_bot_iam(action, payload):
             bot_name = payload.get("bot_name")
+            iam_set = payload.get("iam_set")
             if action == "list":
-                return {"items": self.bot_manager.list_iam(bot_name)}
+                return {"items": self.bot_manager.list_iam(bot_name, iam_set)}
+            if action == "list_sets":
+                sets = self.bot_manager.list_iam_sets(bot_name)
+                bot = self.bot_manager.load_bot(bot_name) if bot_name else None
+                active_set = bot.get("active_iam_set") if bot else None
+                current_set = iam_set or active_set or (sets[0] if sets else self.bot_manager._default_iam_set())
+                return {"sets": sets, "current_set": current_set}
+            if action == "list_all":
+                sets = self.bot_manager.list_iam_sets(bot_name)
+                payload_sets = [{"name": set_name, "items": self.bot_manager.list_iam(bot_name, set_name)} for set_name in sets]
+                bot = self.bot_manager.load_bot(bot_name) if bot_name else None
+                active_set = bot.get("active_iam_set") if bot else None
+                current_set = iam_set or active_set or (sets[0] if sets else self.bot_manager._default_iam_set())
+                return {"sets": payload_sets, "current_set": current_set}
+            if action == "create_set":
+                set_name = self.bot_manager.create_iam_set(bot_name, iam_set)
+                return {"success": set_name is not None, "iam_set": set_name}
+            if action == "delete_set":
+                success = self.bot_manager.delete_iam_set(bot_name, iam_set)
+                return {"success": success}
+            if action == "replace":
+                success = self.bot_manager.replace_iam(bot_name, payload.get("items", []), iam_set)
+                return {"success": success}
             if action == "add":
-                item = self.bot_manager.add_iam(bot_name, payload.get("content", ""))
+                item = self.bot_manager.add_iam(bot_name, payload.get("content", ""), iam_set)
                 return {"success": item is not None, "item": item}
             if action == "update":
-                success = self.bot_manager.update_iam(bot_name, payload.get("iam_id"), payload.get("content", ""))
+                success = self.bot_manager.update_iam(bot_name, payload.get("iam_id"), payload.get("content", ""), iam_set)
                 return {"success": success}
             if action == "delete":
-                success = self.bot_manager.delete_iam(bot_name, payload.get("iam_id"))
+                success = self.bot_manager.delete_iam(bot_name, payload.get("iam_id"), iam_set)
                 return {"success": success}
             return {"success": False}
 
@@ -189,10 +230,23 @@ class Application:
             print(f"[GUI] Chat list requested: {len(chats)} chats found")
             return chats
             
-        def _on_chat_create(bot_name, title):
-            chat = self.chat_manager.create_chat(bot_name, title)
+        def _on_chat_create(bot_name, title, persona_name=None, iam_set=None):
+            chat = self.chat_manager.create_chat(bot_name, title, persona_name, iam_set)
             print(f"[GUI] Chat created: {title} with {bot_name}")
             return chat
+
+        def _on_chat_delete(chat_id):
+            success = self.chat_manager.delete_chat(chat_id)
+            print(f"[GUI] Chat delete requested: {chat_id} ({'successful' if success else 'failed'})")
+            return {"success": success}
+
+        def _on_chat_switch_iam(chat_id, bot_name, iam_set, persona_name=None):
+            result = self.chat_manager.switch_chat_iam_set(chat_id, bot_name, iam_set, persona_name)
+            if result is None:
+                return {"success": False, "message": "Cannot switch IAM after first user message"}
+            self.chat_manager.current_chat_id = chat_id
+            self.current_bot_name = bot_name
+            return {"success": True, "messages": result}
             
         def _on_get_last_chat(bot_name):
             """Get the last chat for a bot, or the last chat from any bot if bot_name is None/empty"""
@@ -339,8 +393,8 @@ class Application:
                 return {"success": False, "message": f"Test failed: {exc}"}
 
         self._gui_server, self._gui_thread, self._gui_url = start_gui_server(
-            _on_message, _on_bot_list, _on_bot_select, _on_bot_create, _on_bot_update, _on_bot_iam, _on_bot_images,
-            _on_chat_list, _on_chat_create, _on_get_last_chat, _on_load_chat, _on_settings_get, _on_settings_update, _on_settings_reset,
+            _on_message, _on_bot_list, _on_bot_select, _on_bot_create, _on_bot_update, _on_bot_delete, _on_bot_iam, _on_bot_images,
+            _on_chat_list, _on_chat_create, _on_chat_delete, _on_chat_switch_iam, _on_get_last_chat, _on_load_chat, _on_settings_get, _on_settings_update, _on_settings_reset,
             _on_settings_test, _on_personas_list, _on_persona_select, _on_persona_create, _on_persona_update, _on_persona_images
         )
         webbrowser.open(self._gui_url)
