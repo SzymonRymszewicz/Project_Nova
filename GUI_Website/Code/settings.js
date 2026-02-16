@@ -15,6 +15,21 @@ function getDefaultModel(provider) {
 	return '';
 }
 
+function getGenerationDefaultSettings() {
+	return {
+		temperature: 0.7,
+		max_tokens: 2048
+	};
+}
+
+function getStyleDefaultSettings() {
+	return {
+		theme: 'default',
+		ui_font_size: 14,
+		chat_font_size: 20
+	};
+}
+
 function setApiTestResult(message, isSuccess) {
 	const result = document.getElementById('api-test-result');
 	if (!result) {
@@ -95,14 +110,55 @@ function showSettings() {
 			lastSavedSettings = { ...normalizedSettings };
 			settingsDraft = { ...normalizedSettings };
 			const modelPlaceholder = providerValue === 'localhost' ? 'Loaded model name in LM Studio' : 'Model name';
-			container.innerHTML = `<div class="settings-grid masonry-grid"><div class="settings-group"><h3>Generation</h3><div class="setting-item"><label class="setting-label">Temperature</label><input type="range" class="setting-input" min="0" max="2" step="0.1" value="${temp}" id="temp"></div><div class="setting-item"><label class="setting-label">Max Tokens</label><input type="number" class="setting-input" value="${tokens}" id="tokens"></div></div><div class="settings-group"><h3>API Client</h3><div class="setting-item"><label class="setting-label">API Provider</label><select class="setting-select" id="provider"><option value="localhost" ${providerValue === 'localhost' ? 'selected' : ''}>Localhost (LM Studio)</option><option value="openai" ${providerValue === 'openai' ? 'selected' : ''}>OpenAI</option></select></div><div class="setting-item"><label class="setting-label">API Base URL</label><input type="text" class="setting-input" value="${apiBaseUrlValue}" id="api-base-url"></div><div class="setting-item"><label class="setting-label">Model</label><input type="text" class="setting-input" value="${modelValue}" placeholder="${modelPlaceholder}" id="model"></div><div class="setting-item"><label class="setting-label">API Key</label><input type="password" class="setting-input" placeholder="Enter API key" id="apikey" value="${apiKeyValue}"></div><div class="setting-item api-test-row"><button class="btn btn-secondary" id="api-test-btn" type="button">Test Connection</button><div class="api-test-result" id="api-test-result"></div></div></div><div class="settings-group"><h3>Style</h3><div class="setting-item"><label class="setting-label">Theme</label><select class="setting-select" id="theme"></select></div><div class="setting-item"><label class="setting-label">UI Size</label><input type="number" class="setting-input" value="${uiFontSize}" id="ui-fontsize"></div><div class="setting-item"><label class="setting-label">Chat Font Size</label><input type="number" class="setting-input" value="${chatFontSize}" id="chat-fontsize"></div></div><div class="settings-group"><h3>Other</h3><div class="setting-item"><label><input type="checkbox" id="autosave" ${settings.auto_save_chats ? 'checked' : ''} > Auto-save Chats</label></div><div class="setting-item"><label><input type="checkbox" id="autoload" ${settings.auto_load_last_chat ? 'checked' : ''} > Auto-load Last Chat</label></div><div class="setting-item"><label><input type="checkbox" id="showtimestamps" ${showTimestamps ? 'checked' : ''} > Show Message Timestamps</label></div><div class="setting-item"><label><input type="checkbox" id="debugmode" ${debugMode ? 'checked' : ''} > Enable Debug Mode</label></div><div class="settings-actions"><button class="btn btn-primary" onclick="saveSettings()" style="margin-top:12px;">Save Settings</button><button class="btn btn-secondary" onclick="resetSettings()" style="margin-top:12px;">Restore Defaults</button></div></div></div>`;
+			container.innerHTML = `<div class="settings-grid masonry-grid"><div class="settings-group"><h3>Generation</h3><div class="setting-item"><label class="setting-label">Temperature</label><input type="range" class="setting-input" min="0" max="2" step="0.1" value="${temp}" id="temp"></div><div class="setting-item"><label class="setting-label">Max Tokens</label><input type="number" class="setting-input" value="${tokens}" id="tokens"></div></div><div class="settings-group"><h3>API Client</h3><div class="setting-item"><label class="setting-label">API Provider</label><select class="setting-select" id="provider"><option value="localhost" ${providerValue === 'localhost' ? 'selected' : ''}>Localhost (LM Studio)</option><option value="openai" ${providerValue === 'openai' ? 'selected' : ''}>OpenAI</option></select></div><div class="setting-item"><label class="setting-label">API Base URL</label><input type="text" class="setting-input" value="${apiBaseUrlValue}" id="api-base-url"></div><div class="setting-item"><label class="setting-label">Model</label><input type="text" class="setting-input" value="${modelValue}" placeholder="${modelPlaceholder}" id="model"></div><div class="setting-item"><label class="setting-label">API Key</label><input type="password" class="setting-input" placeholder="Enter API key" id="apikey" value="${apiKeyValue}"></div><div class="setting-item api-test-row"><button class="btn btn-secondary" id="api-test-btn" type="button">Test Connection</button><div class="api-test-result" id="api-test-result"></div></div></div><div class="settings-group"><h3>Style</h3><div class="setting-item"><label class="setting-label">Theme</label><select class="setting-select" id="theme"></select></div><div class="setting-item"><label class="setting-label">UI Size</label><input type="number" class="setting-input" value="${uiFontSize}" id="ui-fontsize"></div><div class="setting-item"><label class="setting-label">Chat Font Size</label><input type="number" class="setting-input" value="${chatFontSize}" id="chat-fontsize"></div></div><div class="settings-group"><h3>Other</h3><div class="setting-item"><label><input type="checkbox" id="autosave" ${settings.auto_save_chats ? 'checked' : ''} > Auto-save Chats</label></div><div class="setting-item"><label><input type="checkbox" id="autoload" ${settings.auto_load_last_chat ? 'checked' : ''} > Auto-load Last Chat</label></div><div class="setting-item"><label><input type="checkbox" id="showtimestamps" ${showTimestamps ? 'checked' : ''} > Show Message Timestamps</label></div><div class="setting-item"><label><input type="checkbox" id="debugmode" ${debugMode ? 'checked' : ''} > Enable Debug Mode</label></div><div class="settings-actions"><button class="btn btn-primary" onclick="saveSettings()">Save Settings</button><button class="btn btn-secondary" onclick="resetSettings()">Restore Defaults</button></div></div></div>`;
 			messagesContainer.appendChild(container);
 			makeSectionsCollapsible(container, '.settings-group', 'settings');
 			scheduleMasonryRefresh(container);
 			loadThemes(settings.theme || 'default');
+			attachScopedRestoreButtons(container);
 			bindSettingsDraft();
 			applyFontSizes(uiFontSize, chatFontSize);
 		});
+}
+
+function attachScopedRestoreButtons(container) {
+	if (!container) {
+		return;
+	}
+	const getGroupTitle = (group) => {
+		if (!group) {
+			return '';
+		}
+		const titleEl = group.querySelector('.section-collapsible-title') || group.querySelector('h3');
+		const raw = (titleEl ? titleEl.textContent : '').toLowerCase();
+		return raw.replace(/[^a-z\s]/g, '').trim();
+	};
+	const groups = Array.from(container.querySelectorAll('.settings-group'));
+	const generationGroup = groups.find(group => {
+		const title = getGroupTitle(group);
+		return title === 'generation';
+	});
+	const styleGroup = groups.find(group => {
+		const title = getGroupTitle(group);
+		return title === 'style';
+	});
+
+	if (generationGroup && !generationGroup.querySelector('#restore-generation-btn')) {
+		const generationBody = generationGroup.querySelector('.section-collapsible-body') || generationGroup;
+		const actions = document.createElement('div');
+		actions.className = 'settings-actions';
+		actions.innerHTML = '<button class="btn btn-primary" id="save-generation-btn" type="button">Save Generation</button><button class="btn btn-secondary" id="restore-generation-btn" type="button">Restore Generation</button>';
+		generationBody.appendChild(actions);
+	}
+
+	if (styleGroup && !styleGroup.querySelector('#restore-style-btn')) {
+		const styleBody = styleGroup.querySelector('.section-collapsible-body') || styleGroup;
+		const actions = document.createElement('div');
+		actions.className = 'settings-actions';
+		actions.innerHTML = '<button class="btn btn-primary" id="save-style-btn" type="button">Save Style</button><button class="btn btn-secondary" id="restore-style-btn" type="button">Restore Style</button>';
+		styleBody.appendChild(actions);
+	}
+	scheduleMasonryRefresh(container);
 }
 
 function bindSettingsDraft() {
@@ -120,6 +176,10 @@ function bindSettingsDraft() {
 	const autoload = document.getElementById('autoload');
 	const showTimestamps = document.getElementById('showtimestamps');
 	const debugMode = document.getElementById('debugmode');
+	const saveGenerationBtn = document.getElementById('save-generation-btn');
+	const saveStyleBtn = document.getElementById('save-style-btn');
+	const restoreGenerationBtn = document.getElementById('restore-generation-btn');
+	const restoreStyleBtn = document.getElementById('restore-style-btn');
 
 	if (temp) {
 		temp.addEventListener('input', () => {
@@ -221,6 +281,26 @@ function bindSettingsDraft() {
 			testApiConnection();
 		});
 	}
+	if (saveGenerationBtn) {
+		saveGenerationBtn.addEventListener('click', () => {
+			saveGenerationSettingsScoped();
+		});
+	}
+	if (saveStyleBtn) {
+		saveStyleBtn.addEventListener('click', () => {
+			saveStyleSettingsScoped();
+		});
+	}
+	if (restoreGenerationBtn) {
+		restoreGenerationBtn.addEventListener('click', () => {
+			restoreGenerationSettings({ showAlert: true, askConfirmation: true });
+		});
+	}
+	if (restoreStyleBtn) {
+		restoreStyleBtn.addEventListener('click', () => {
+			restoreStyleSettings({ showAlert: true, askConfirmation: true });
+		});
+	}
 }
 
 function applyTheme(themeName) {
@@ -278,6 +358,34 @@ function loadThemes(selectedTheme) {
 		});
 }
 
+function saveGenerationSettingsScoped() {
+	const tempInput = document.getElementById('temp');
+	const tokensInput = document.getElementById('tokens');
+	if (!tempInput || !tokensInput) {
+		return Promise.resolve();
+	}
+	const payload = {
+		temperature: parseFloat(tempInput.value),
+		max_tokens: parseInt(tokensInput.value, 10)
+	};
+	return saveSettingsPatch(payload, true);
+}
+
+function saveStyleSettingsScoped() {
+	const themeInput = document.getElementById('theme');
+	const uiFontSizeInput = document.getElementById('ui-fontsize');
+	const chatFontSizeInput = document.getElementById('chat-fontsize');
+	if (!themeInput || !uiFontSizeInput || !chatFontSizeInput) {
+		return Promise.resolve();
+	}
+	const payload = {
+		theme: themeInput.value || 'default',
+		ui_font_size: parseInt(uiFontSizeInput.value, 10),
+		chat_font_size: parseInt(chatFontSizeInput.value, 10)
+	};
+	return saveSettingsPatch(payload, true);
+}
+
 function normalizeAndApplySettingsState(settings) {
 	const normalized = {
 		...lastSavedSettings,
@@ -313,6 +421,42 @@ function saveSettingsPatch(settingsPatch, showAlert = true) {
 			normalizeAndApplySettingsState(payload);
 			if (showAlert) {
 				alert('Settings saved!');
+			}
+		});
+}
+
+function restoreGenerationSettings(options = {}) {
+	const showAlert = options.showAlert ?? true;
+	const askConfirmation = options.askConfirmation ?? true;
+	if (askConfirmation && !confirm('Restore Generation settings to defaults?')) {
+		return Promise.resolve();
+	}
+	const payload = getGenerationDefaultSettings();
+	return saveSettingsPatch(payload, false)
+		.then(() => {
+			if (currentView === 'settings') {
+				updateSettings({ ...lastSavedSettings, ...payload }, { showSettingsOnMissing: false });
+			}
+			if (showAlert) {
+				alert('Generation settings restored to defaults!');
+			}
+		});
+}
+
+function restoreStyleSettings(options = {}) {
+	const showAlert = options.showAlert ?? true;
+	const askConfirmation = options.askConfirmation ?? true;
+	if (askConfirmation && !confirm('Restore Style settings to defaults?')) {
+		return Promise.resolve();
+	}
+	const payload = getStyleDefaultSettings();
+	return saveSettingsPatch(payload, false)
+		.then(() => {
+			if (currentView === 'settings') {
+				updateSettings({ ...lastSavedSettings, ...payload }, { showSettingsOnMissing: false });
+			}
+			if (showAlert) {
+				alert('Style settings restored to defaults!');
 			}
 		});
 }

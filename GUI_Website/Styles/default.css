@@ -140,6 +140,7 @@ body{font-family:"Segoe UI",Arial,sans-serif;background:#07090d;color:#d5e2ff;he
 .section-collapsible-toggle{width:2rem;height:2rem;border:1px solid #17202b;border-radius:0.4rem;background:#0a0f16;color:#19f2ff;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1;padding:0;}
 .section-collapsible-toggle:hover{border-color:#19f2ff;}
 .section-collapsible-body{display:flex;flex-direction:column;gap:0;overflow:hidden;max-height:none;opacity:1;transform:translateY(0);transition:max-height 0.2s ease,opacity 0.2s ease,transform 0.2s ease;will-change:max-height,opacity,transform;}
+.settings-group .section-collapsible-body{flex:1;min-height:0;}
 .section-collapsed .section-collapsible-header{margin-bottom:0;}
 .settings-actions{margin-top:auto;display:flex;flex-direction:column;gap:1rem;}
 .settings-actions .btn{width:100%;}

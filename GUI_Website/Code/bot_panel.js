@@ -17,7 +17,7 @@ function updateBotPanel() {
 	const tempValue = Number.isFinite(settingsDraft.temperature) ? settingsDraft.temperature : (lastSavedSettings.temperature ?? 0.7);
 	const tokensValue = Number.isFinite(settingsDraft.max_tokens) ? settingsDraft.max_tokens : (lastSavedSettings.max_tokens ?? 2048);
 
-	inner.innerHTML = `<div class="bot-panel-cover" style="${coverStyle}">${coverContent}</div><div class="bot-panel-name-row"><div class="bot-panel-name">${botName}</div><button class="icon-btn bot-panel-edit-btn" type="button" title="Edit bot" aria-label="Edit bot"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 010 2.828l-1 1-3.828-3.828 1-1a2 2 0 012.828 0zM2 13.586l9.586-9.586 3.828 3.828L5.828 17.414H2v-3.828z"/></svg></button></div><div class="bot-panel-group"><h3>Generation</h3><div class="setting-item"><label class="setting-label">Temperature</label><input type="range" class="setting-input" min="0" max="2" step="0.1" value="${tempValue}" id="bot-temp"></div><div class="setting-item"><label class="setting-label">Max Tokens</label><input type="number" class="setting-input" value="${tokensValue}" id="bot-tokens"></div><div class="bot-panel-actions"><button class="btn btn-primary" id="bot-settings-save">Save Settings</button><button class="btn btn-secondary" id="bot-settings-reset">Restore Defaults</button></div></div>`;
+	inner.innerHTML = `<div class="bot-panel-cover" style="${coverStyle}">${coverContent}</div><div class="bot-panel-name-row"><div class="bot-panel-name">${botName}</div><button class="icon-btn bot-panel-edit-btn" type="button" title="Edit bot" aria-label="Edit bot"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 010 2.828l-1 1-3.828-3.828 1-1a2 2 0 012.828 0zM2 13.586l9.586-9.586 3.828 3.828L5.828 17.414H2v-3.828z"/></svg></button></div><div class="bot-panel-group"><h3>Generation</h3><div class="setting-item"><label class="setting-label">Temperature</label><input type="range" class="setting-input" min="0" max="2" step="0.1" value="${tempValue}" id="bot-temp"></div><div class="setting-item"><label class="setting-label">Max Tokens</label><input type="number" class="setting-input" value="${tokensValue}" id="bot-tokens"></div><div class="bot-panel-actions"><button class="btn btn-primary" id="bot-settings-save">Save Generation</button><button class="btn btn-secondary" id="bot-settings-reset">Restore Generation</button></div></div>`;
 	makeSectionsCollapsible(inner, '.bot-panel-group', 'chat-generation-panel');
 
 	const tempInput = document.getElementById('bot-temp');
@@ -105,22 +105,20 @@ function saveGenerationSettings() {
 }
 
 function resetGenerationSettingsFromPanel() {
-	if (!confirm('Reset all settings to defaults? This cannot be undone.')) {
+	if (typeof restoreGenerationSettings === 'function') {
+		restoreGenerationSettings({ showAlert: true, askConfirmation: true });
 		return;
 	}
-	fetch('/api/settings/reset', {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({})
-	})
-		.then(r => r.json())
-		.then(data => {
-			if (data) {
-				alert('Settings restored to defaults!');
-				clearAllCollapsedStates();
-				updateSettings(data, { showSettingsOnMissing: false });
-			} else {
-				alert('Failed to reset settings');
-			}
+	if (!confirm('Restore Generation settings to defaults?')) {
+		return;
+	}
+	const payload = {
+		temperature: 0.7,
+		max_tokens: 2048
+	};
+	saveSettingsPatch(payload, false)
+		.then(() => {
+			alert('Generation settings restored to defaults!');
+			updateBotPanel();
 		});
 }
