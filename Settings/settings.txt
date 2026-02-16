@@ -1,0 +1,33 @@
+{
+  "theme": "default",
+  "enable_animations": true,
+  "ui_font_size": 14,
+  "chat_font_size": 20,
+  "console_width": 980,
+  "console_height": 620,
+  "max_context_messages": 20,
+  "temperature": 0.7,
+  "max_tokens": 10000,
+  "max_response_length": 300,
+  "stop_strings": [
+    "User",
+    "User:"
+  ],
+  "top_k": 40,
+  "enable_repeat_penalty": true,
+  "repeat_penalty": 1,
+  "enable_top_p_max": true,
+  "top_p_max": 0.95,
+  "enable_top_p_min": true,
+  "top_p_min": 0.05,
+  "api_provider": "localhost",
+  "api_key": "",
+  "api_base_url": "http://localhost:1234/v1",
+  "model": "Localhost",
+  "auto_save_chats": true,
+  "default_bot": "Nova",
+  "gui_port": 5067,
+  "auto_load_last_chat": true,
+  "show_message_timestamps": true,
+  "debug_mode": false
+}

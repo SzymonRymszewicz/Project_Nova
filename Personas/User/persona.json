@@ -1,0 +1,19 @@
+{
+  "id": "User",
+  "name": "User",
+  "description": "A default user persona.",
+  "cover_art": "/Personas/User/Coverart/User.png",
+  "icon_art": "/Personas/User/Coverart/User.png",
+  "cover_art_fit": {
+    "size": 260,
+    "x": 50,
+    "y": 35
+  },
+  "icon_fit": {
+    "size": 150,
+    "x": 50,
+    "y": 30
+  },
+  "created": "2026-02-14T00:05:39.378103",
+  "is_system": true
+}

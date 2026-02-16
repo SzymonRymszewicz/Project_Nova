@@ -1,0 +1,21 @@
+{
+  "description": "The helpful AI assistant and companion.",
+  "cover_art": "/Bots/Nova/Coverart/Nova.png",
+  "cover_art_fit": {
+    "size": 110,
+    "x": 40,
+    "y": 100
+  },
+  "icon_fit": {
+    "size": 100,
+    "x": 50,
+    "y": 35
+  },
+  "prompt_order": [
+    "core",
+    "scenario",
+    "user_persona",
+    "iam"
+  ],
+  "active_iam_set": "IAM_3"
+}
