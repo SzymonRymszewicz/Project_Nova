@@ -172,9 +172,11 @@ def _build_handler(callbacks):
 					save_response = data.get('save_response', False)
 					chat_id = data.get('chat_id')
 					bot_name = data.get('bot_name')
+					persona_id = data.get('persona_id')
+					persona_name = data.get('persona_name')
 					
 					if callbacks.get('on_message'):
-						response = callbacks['on_message'](message, save_response, chat_id, bot_name)
+						response = callbacks['on_message'](message, save_response, chat_id, bot_name, persona_id, persona_name)
 						if response and not save_response:
 							# Only return response if this is a user message, not saving a bot response
 							response_data = json.dumps({"response": response})
@@ -416,6 +418,9 @@ def _build_handler(callbacks):
 						elif action == 'update' and callbacks.get('on_persona_update'):
 							result = callbacks['on_persona_update'](data)
 							response_data = json.dumps(result or {})
+						elif action == 'delete' and callbacks.get('on_persona_delete'):
+							result = callbacks['on_persona_delete'](data.get('persona_id') or data.get('id'))
+							response_data = json.dumps(result or {"success": False})
 						else:
 							response_data = json.dumps({})
 					else:
@@ -555,7 +560,7 @@ def _build_handler(callbacks):
 def start_gui_server(on_message=None, on_bot_list=None, on_bot_select=None, on_bot_create=None, on_bot_update=None, on_bot_delete=None, on_bot_iam=None, on_bot_images=None,
                      on_chat_list=None, on_chat_create=None, on_chat_delete=None, on_chat_switch_iam=None, on_get_last_chat=None, on_load_chat=None, on_settings_get=None, 
 					 on_settings_update=None, on_settings_reset=None, on_settings_test=None, on_personas_list=None, on_persona_select=None, 
-					 on_persona_create=None, on_persona_update=None, on_persona_images=None):
+					 on_persona_create=None, on_persona_update=None, on_persona_delete=None, on_persona_images=None):
 	callbacks = {
 		'on_message': on_message,
 		'on_bot_list': on_bot_list,
@@ -579,6 +584,7 @@ def start_gui_server(on_message=None, on_bot_list=None, on_bot_select=None, on_b
 		'on_persona_select': on_persona_select,
 		'on_persona_create': on_persona_create,
 		'on_persona_update': on_persona_update,
+		'on_persona_delete': on_persona_delete,
 		'on_persona_images': on_persona_images
 	}
 	handler = _build_handler(callbacks)

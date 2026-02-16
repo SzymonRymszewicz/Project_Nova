@@ -14,6 +14,7 @@
   "prompt_order": [
     "core",
     "scenario",
+    "user_persona",
     "iam"
   ],
   "active_iam_set": "IAM_3"

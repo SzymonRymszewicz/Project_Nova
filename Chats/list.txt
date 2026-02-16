@@ -1,12 +1,12 @@
 [
   {
-    "id": "ChatChat_with_Nova_20260216_075155",
+    "id": "ChatChat_with_Nova_20260216_231708",
     "bot": "Nova",
     "title": "Chat with Nova",
-    "created": "20260216_075155",
-    "last_updated": "20260216_105228",
-    "last_opened": "20260216_105228_064370",
-    "message_count": 2,
-    "chat_folder": "c:\\Users\\Szymon\\Desktop\\Project_Nova\\Nova\\Code\\..\\Bots\\Nova\\ChatChat_with_Nova_20260216_075155"
+    "created": "20260216_231708",
+    "last_updated": "20260216_231708",
+    "last_opened": "20260216_232029_399715",
+    "message_count": 0,
+    "chat_folder": "c:\\Users\\Szymon\\Desktop\\Project_Nova\\Nova\\Code\\..\\Bots\\Nova\\ChatChat_with_Nova_20260216_231708"
   }
 ]

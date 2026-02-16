@@ -26,6 +26,8 @@ function showView(view) {
 		showChats();
 	} else if (view === 'personas') {
 		showPersonas();
+	} else if (view === 'persona-create') {
+		showPersonaCreation();
 	} else if (view === 'settings') {
 		showSettings();
 	}

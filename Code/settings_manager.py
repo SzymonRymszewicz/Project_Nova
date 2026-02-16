@@ -22,13 +22,22 @@ class SettingsManager:
             # Generation Settings
             "max_context_messages": 20,
             "temperature": 0.7,
-            "max_tokens": 2048,
+            "max_tokens": 10000,
+            "max_response_length": 300,
+            "stop_strings": ["User", "User:"],
+            "top_k": 40,
+            "enable_repeat_penalty": True,
+            "repeat_penalty": 1.0,
+            "enable_top_p_max": True,
+            "top_p_max": 0.95,
+            "enable_top_p_min": True,
+            "top_p_min": 0.05,
             
             # API Client Settings
             "api_provider": "localhost",
             "api_key": "",
             "api_base_url": "http://localhost:1234/v1",
-            "model": "",
+            "model": "Localhost",
             
             # Other Settings
             "auto_save_chats": True,
@@ -70,6 +79,11 @@ class SettingsManager:
                             self.settings["chat_font_size"] = legacy_font
                     if "chat_font_size" not in self.settings and "ui_font_size" in self.settings:
                         self.settings["chat_font_size"] = self.settings["ui_font_size"]
+
+                    provider = str(self.settings.get("api_provider", "localhost")).strip().lower()
+                    model = str(self.settings.get("model", "")).strip()
+                    if provider == "localhost" and not model:
+                        self.settings["model"] = "Localhost"
                     
             print("[SettingsManager] Loaded settings")
             return self.settings

@@ -20,6 +20,40 @@ let masonryResizeBound = false;
 const observedMasonryGrids = new WeakSet();
 let sectionLayoutResizeBound = false;
 
+function showToast(message, type = 'info', durationMs = 1800) {
+	if (!message) {
+		return;
+	}
+	let container = document.getElementById('app-toast-container');
+	if (!container) {
+		container = document.createElement('div');
+		container.id = 'app-toast-container';
+		container.className = 'app-toast-container';
+		document.body.appendChild(container);
+	}
+
+	const toast = document.createElement('div');
+	toast.className = `app-toast app-toast-${type}`;
+	toast.textContent = message;
+	container.appendChild(toast);
+
+	requestAnimationFrame(() => {
+		toast.classList.add('visible');
+	});
+
+	window.setTimeout(() => {
+		toast.classList.remove('visible');
+		window.setTimeout(() => {
+			if (toast.parentNode === container) {
+				container.removeChild(toast);
+			}
+			if (!container.childElementCount && container.parentNode) {
+				container.parentNode.removeChild(container);
+			}
+		}, 220);
+	}, Math.max(800, durationMs));
+}
+
 function buildImageStyle(url, fit) {
 	if (!url) {
 		return '';
@@ -364,7 +398,17 @@ function equalizeSectionRows(root = document) {
 			return;
 		}
 
+		const hasActiveCollapseTransition = items.some(item => {
+			const body = item.querySelector(':scope > .section-collapsible-body');
+			if (!body) {
+				return false;
+			}
+			const maxHeight = body.style.maxHeight || '';
+			return !!maxHeight && maxHeight !== 'none';
+		});
+
 		const columns = getGridColumnCount(grid);
+		const isFixedSettingsLayout = grid.classList.contains('settings-layout-fixed');
 		items.forEach(item => {
 			clearGridItemLayout(item);
 		});
@@ -379,23 +423,92 @@ function equalizeSectionRows(root = document) {
 			return;
 		}
 
-		const hasCollapsed = items.some(item => item.classList.contains('section-collapsed'));
+		if (isFixedSettingsLayout) {
+			const generationGroup = items[0] || null;
+			const apiGroup = items[1] || null;
+			const styleGroup = items[2] || null;
+			const otherGroup = items[3] || null;
+			const orderedItems = [apiGroup, styleGroup, otherGroup, generationGroup].filter(Boolean);
+			const apiCollapsed = !!(apiGroup && apiGroup.classList.contains('section-collapsed'));
+
+			if (apiCollapsed) {
+				orderedItems.forEach(item => {
+					if (item.classList.contains('section-collapsed')) {
+						item.style.minHeight = '';
+						return;
+					}
+					const existingLockedHeight = parseFloat(item.dataset.lockedExpandedHeight || '0') || 0;
+					const measuredHeight = item.getBoundingClientRect().height || 0;
+					const stableMeasuredHeight = measuredHeight > 24 ? measuredHeight : 0;
+					const lockedHeight = Math.max(existingLockedHeight, stableMeasuredHeight);
+					if (lockedHeight > 0) {
+						item.dataset.lockedExpandedHeight = `${lockedHeight}`;
+					}
+					if (lockedHeight > 0) {
+						item.style.minHeight = `${lockedHeight}px`;
+					}
+				});
+
+				const stackColumns = Math.max(1, Math.min(columns, 3));
+				applyCollapsedColumnStackLayout(grid, orderedItems, stackColumns);
+				return;
+			}
+
+			const stableThreshold = 24;
+			const currentApiLock = parseFloat((apiGroup && apiGroup.dataset.lockedExpandedHeight) || '0') || 0;
+			const measuredApiHeight = apiGroup ? (apiGroup.getBoundingClientRect().height || 0) : 0;
+			const stableApiHeight = measuredApiHeight > stableThreshold ? measuredApiHeight : 0;
+			const topRowAnchorHeight = Math.max(currentApiLock, stableApiHeight);
+
+			if (apiGroup && topRowAnchorHeight > 0) {
+				apiGroup.dataset.lockedExpandedHeight = `${topRowAnchorHeight}`;
+			}
+
+			[apiGroup, styleGroup, otherGroup].filter(Boolean).forEach(item => {
+				if (item.classList.contains('section-collapsed')) {
+					item.style.minHeight = '';
+					return;
+				}
+				if (topRowAnchorHeight > 0) {
+					item.style.minHeight = `${topRowAnchorHeight}px`;
+					item.dataset.lockedExpandedHeight = `${topRowAnchorHeight}`;
+				}
+			});
+
+			if (generationGroup) {
+				if (generationGroup.classList.contains('section-collapsed')) {
+					generationGroup.style.minHeight = '';
+				} else {
+					const currentGenerationLock = parseFloat(generationGroup.dataset.lockedExpandedHeight || '0') || 0;
+					const measuredGenerationHeight = generationGroup.getBoundingClientRect().height || 0;
+					const stableGenerationHeight = measuredGenerationHeight > stableThreshold ? measuredGenerationHeight : 0;
+					const generationLockHeight = Math.max(currentGenerationLock, stableGenerationHeight);
+					if (generationLockHeight > 0) {
+						generationGroup.dataset.lockedExpandedHeight = `${generationLockHeight}`;
+						generationGroup.style.minHeight = `${generationLockHeight}px`;
+					}
+				}
+			}
+
+			return;
+		}
+
+		const hasCollapsed = items.some(item => item.classList.contains('section-collapsed')) || hasActiveCollapseTransition;
 		if (hasCollapsed) {
 			items.forEach(item => {
 				const storageKey = item.dataset.collapsibleStorageKey || '';
 				if (item.classList.contains('section-collapsed')) {
 					item.style.minHeight = '';
-					delete item.dataset.lockedExpandedHeight;
 					return;
 				}
-				if (!item.dataset.lockedExpandedHeight) {
-					const storedHeight = readStoredSectionHeight(storageKey);
-					const measuredHeight = item.getBoundingClientRect().height;
-					const baseline = storedHeight > 0 ? storedHeight : measuredHeight;
-					item.dataset.lockedExpandedHeight = `${baseline}`;
-				}
-				const lockedHeight = parseFloat(item.dataset.lockedExpandedHeight) || 0;
+				const stableThreshold = 24;
+				const storedHeight = readStoredSectionHeight(storageKey);
+				const existingLockedHeight = parseFloat(item.dataset.lockedExpandedHeight || '0') || 0;
+				const measuredHeight = item.getBoundingClientRect().height || 0;
+				const stableMeasuredHeight = measuredHeight > stableThreshold ? measuredHeight : 0;
+				const lockedHeight = Math.max(existingLockedHeight, storedHeight, stableMeasuredHeight);
 				if (lockedHeight > 0) {
+					item.dataset.lockedExpandedHeight = `${lockedHeight}`;
 					item.style.minHeight = `${lockedHeight}px`;
 					writeStoredSectionHeight(storageKey, lockedHeight);
 				}

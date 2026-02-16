@@ -239,7 +239,13 @@ function sendMessage() {
 	fetch('/api/message', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ message: text })
+		body: JSON.stringify({
+			message: text,
+			chat_id: currentChatId,
+			bot_name: currentBotName,
+			persona_id: (currentPersonaInfo && currentPersonaInfo.id) ? currentPersonaInfo.id : 'User',
+			persona_name: (currentPersonaInfo && currentPersonaInfo.name) ? currentPersonaInfo.name : 'User'
+		})
 	})
 		.then(r => r.json())
 		.then(data => {

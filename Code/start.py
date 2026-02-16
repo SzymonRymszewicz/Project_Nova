@@ -18,6 +18,7 @@ from bot_manager import BotManager
 from chat_manager import ChatManager
 from settings_manager import SettingsManager
 from persona_manager import PersonaManager
+from pipeline import PromptPipeline
 
 class Application:
     def __init__(self):
@@ -38,6 +39,7 @@ class Application:
         # Track current active bot and persona
         self.current_bot_name = None
         self.current_persona_id = None
+        self.prompt_pipeline = PromptPipeline(self.bot_manager, self.chat_manager, self.persona_manager, self.settings_manager)
 
         self._app_thread = threading.Thread(target=self._run_app, daemon=True)
         self._app_thread.start()
@@ -88,7 +90,7 @@ class Application:
         if self._gui_server is not None:
             return
 
-        def _on_message(message, save_response=False, chat_id=None, bot_name=None):
+        def _on_message(message, save_response=False, chat_id=None, bot_name=None, persona_id=None, persona_name=None):
             print(f"[GUI] Message: {message} (save_response={save_response})")
             # Add message to current chat
             if save_response:
@@ -97,10 +99,23 @@ class Application:
                     self.chat_manager.add_message("assistant", message, chat_id, bot_name)
             else:
                 # This is a user message
-                if self.chat_manager.current_chat_id:
-                    self.chat_manager.add_message("user", message, self.chat_manager.current_chat_id, self.current_bot_name)
-            # TODO: Generate AI response and return it (only for user messages, not responses)
-            return "Message received! (Bot response will be implemented soon)"
+                active_chat_id = chat_id or self.chat_manager.current_chat_id
+                active_bot_name = bot_name or self.current_bot_name
+                if active_chat_id and active_bot_name:
+                    self.chat_manager.add_message("user", message, active_chat_id, active_bot_name)
+
+                reply, error = self.prompt_pipeline.generate_reply(
+                    user_message=message,
+                    bot_name=active_bot_name,
+                    chat_id=active_chat_id,
+                    persona_id=persona_id,
+                    persona_name=persona_name
+                )
+                if error:
+                    return f"API error: {error}"
+                return reply or "API error: LLM returned empty response."
+
+            return ""
             
         def _on_bot_list():
             bots = self.bot_manager.discover_bots()
@@ -301,6 +316,19 @@ class Application:
             print(f"[GUI] Persona updated: {persona_id}")
             return persona
 
+        def _on_persona_delete(persona_id):
+            if not persona_id:
+                return {"success": False, "message": "Missing persona id"}
+            if persona_id == "User":
+                return {"success": False, "message": "Cannot delete default User persona"}
+            deleted = self.persona_manager.delete_persona(persona_id)
+            if not deleted:
+                return {"success": False, "message": "Failed to delete persona"}
+            if self.current_persona_id == persona_id:
+                self.current_persona_id = None
+            print(f"[GUI] Persona deleted: {persona_id}")
+            return {"success": True}
+
         def _on_persona_images(action, payload):
             persona_id = payload.get("persona_id") or payload.get("id") or payload.get("persona")
             if action == "list":
@@ -395,7 +423,7 @@ class Application:
         self._gui_server, self._gui_thread, self._gui_url = start_gui_server(
             _on_message, _on_bot_list, _on_bot_select, _on_bot_create, _on_bot_update, _on_bot_delete, _on_bot_iam, _on_bot_images,
             _on_chat_list, _on_chat_create, _on_chat_delete, _on_chat_switch_iam, _on_get_last_chat, _on_load_chat, _on_settings_get, _on_settings_update, _on_settings_reset,
-            _on_settings_test, _on_personas_list, _on_persona_select, _on_persona_create, _on_persona_update, _on_persona_images
+            _on_settings_test, _on_personas_list, _on_persona_select, _on_persona_create, _on_persona_update, _on_persona_delete, _on_persona_images
         )
         webbrowser.open(self._gui_url)
 

@@ -1134,7 +1134,7 @@ function showBotAdvancedEditor(bot) {
 }
 
 function normalizePromptOrder(promptOrder) {
-	const defaults = ['scenario', 'core', 'iam'];
+	const defaults = ['scenario', 'core', 'user_persona', 'iam'];
 	if (!Array.isArray(promptOrder)) {
 		return [...defaults];
 	}
@@ -1158,6 +1158,9 @@ function getPromptOrderLabel(key) {
 	}
 	if (key === 'core') {
 		return 'Definition / Core';
+	}
+	if (key === 'user_persona') {
+		return 'User / Persona';
 	}
 	return 'Chat History / IAM\'s';
 }
@@ -1496,6 +1499,7 @@ function renderBotEditor(bot, advancedMode) {
 }
 
 function saveBotEdits(originalName) {
+	const isAdvancedMode = !!document.querySelector('.bot-editor.bot-editor-advanced');
 	const nameInput = document.getElementById('bot-name');
 	const descInput = document.getElementById('bot-description');
 	const coreInput = document.getElementById('bot-core');
@@ -1539,7 +1543,14 @@ function saveBotEdits(originalName) {
 				currentBotInfo = result.bot;
 				currentBotName = result.bot.name;
 				updateBotPanel();
-				renderBotDetailView(result.bot);
+				if (isAdvancedMode) {
+					showBotAdvancedEditor(result.bot);
+				} else {
+					showBotEditor(result.bot);
+				}
+				if (typeof showToast === 'function') {
+					showToast('Bot saved.', 'success');
+				}
 			} else {
 				alert((result && result.message) || 'Failed to update bot');
 			}

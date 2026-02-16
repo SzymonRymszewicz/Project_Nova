@@ -17,7 +17,7 @@ class BotManager:
         self.bots_cache = {}
 
     def _default_prompt_order(self):
-        return ["scenario", "core", "iam"]
+        return ["scenario", "core", "user_persona", "iam"]
 
     def _default_iam_set(self):
         return "IAM_1"
