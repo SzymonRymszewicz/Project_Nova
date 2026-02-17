@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+Models/ChatModels/*
+!Models/ChatModels/.gitkeep

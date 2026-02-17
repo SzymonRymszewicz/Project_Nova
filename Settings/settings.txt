@@ -9,13 +9,10 @@
   "temperature": 0.7,
   "max_tokens": 10000,
   "max_response_length": 300,
-  "stop_strings": [
-    "User",
-    "User:"
-  ],
+  "stop_strings": [],
   "top_k": 40,
   "enable_repeat_penalty": true,
-  "repeat_penalty": 1,
+  "repeat_penalty": 1.0,
   "enable_top_p_max": true,
   "top_p_max": 0.95,
   "enable_top_p_min": true,

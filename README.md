@@ -10,69 +10,29 @@ If you like what I create, consider supporting me by buying me a coffee ;)
 
 ---
 
-## Current Version (1.0.0) - How it works
-
-This version is a local GUI-first bot studio with a working message pipeline.
-
-- You can create, edit, and delete **Bots**.
-- You can create, edit, and delete **Personas** (except the default `User` persona).
-- You can start chats and send messages from the web UI.
-- The app builds prompts in an ordered structure and sends them to your configured API (`/chat/completions`).
-- The assistant response is returned to chat and also saved in chat history.
-
-### Prompt build order (runtime)
-
-At message time, the app composes context blocks using the configured Prompt Order:
-
-1. **Core** (bot identity/name + core definition)
-2. **Scenario** (rules/scenario)
-3. **User / Persona** (persona name + persona definition from `user.txt` if available)
-4. **IAM / Chat History** (conversation history)
-
-Then it appends the latest user message (if not already present), sends the final message array to the selected model, and displays the result in the chat.
-
-### API client behavior
-
-- Supports **Localhost (LM Studio/OpenAI-compatible)** and **OpenAI** provider modes.
-- Localhost defaults:
-  - Base URL: `http://localhost:1234/v1`
-  - Model: `Localhost`
-- If API settings are missing/invalid, the chat returns a simple `API error: ...` message in the conversation.
-
-### Generation settings used
-
-The current pipeline uses your saved settings, including:
-
-- `temperature`
-- `max_response_length` (sent as `max_tokens`)
-- `stop_strings`
-- `top_p` (when enabled)
-- Localhost-specific extras (when enabled): `top_k`, `repeat_penalty`, `min_p`
-
----
-
 ## Simple Guide
 
 ### 1) Start the app
 
-From the `Nova/Code` folder, run:
+From the `Nova` folder, run:
 
 ```bash
-python main.py
+start.bat
 ```
 
-The app starts a local GUI server and opens the browser automatically.
+The script prepares dependencies, launches the app, starts the local GUI server, and opens the browser.
 
 ### 2) Configure API Client (Settings)
 
 1. Open **Settings**.
 2. Choose provider:
-	- `Localhost (LM Studio)` for local models
+	- `Localhost (LM Studio)` for LM Studio/OpenAI-compatible local server
+	- `LocalModel (Direct File)` to run a local model file directly from this project
 	- `OpenAI` for OpenAI API
 3. Confirm/update:
-	- API Base URL
-	- Model
-	- API Key (required for OpenAI)
+	- **Localhost:** API Base URL + Model
+	- **LocalModel:** pick model file in **Local Model File** (from `Models/ChatModels`)
+	- **OpenAI:** API Base URL + Model + API Key
 4. Click **Test Connection**.
 5. Save settings.
 
@@ -94,13 +54,56 @@ The app starts a local GUI server and opens the browser automatically.
 1. Open **Chat**.
 2. Select bot/persona.
 3. Send a message.
-4. The app generates a real model response and stores the conversation.
+4. Use hover actions on messages when needed:
+	- Bot message: edit, regenerate, continue, delete
+	- User message: edit, delete (and regenerate if no bot reply follows)
+5. The app stores your conversation locally.
 
 ---
 
 ## Notes
 
-- This project is still WIP, but the core end-to-end chat loop is now active in 1.0.0.
+- This project is still WIP, but the core end-to-end chat loop is active.
 - Existing chats/settings are stored locally in project folders.
 - If responses fail, check provider/base URL/model/API key first.
+
+---
+
+## Version 1.0.1 Update - What's new
+
+This update focuses on chat quality-of-life, better message controls, and direct local model support.
+
+### 1) New message action controls in Chat
+
+Messages now have action buttons on hover:
+
+- **Bot messages:** edit, regenerate, continue, delete
+- **User messages:** edit, delete
+- **User regenerate fallback:** if a user message has no following bot reply (for example after deleting a bot response), regenerate is available from that user message to create a new assistant reply.
+
+### 2) Better generation UX feedback
+
+- The chat now shows temporary **Thinking...** states during generation/regeneration.
+- Regenerate and continue now display visual processing feedback directly in the message flow.
+
+### 3) Improved regenerate/continue behavior
+
+- Continue logic was improved to reduce repeated duplicate chunks.
+- Regenerate can target both assistant messages and eligible user messages (when no assistant reply exists yet).
+
+### 4) API Client now supports LocalModel provider
+
+In addition to **Localhost** and **OpenAI**, there is now:
+
+- **LocalModel (Direct File)** provider
+- Local model file picker that lists files from `Models/ChatModels`
+- Model list filtering to likely model file types (e.g. `.gguf`, `.bin`, `.safetensors`, `.pt`, `.pth`)
+
+> Note: LocalModel requires `llama-cpp-python` in your Python environment.
+
+### 5) Startup and repo safety improvements
+
+- `start.bat` now bootstraps dependencies and launches the app directly.
+
+
 

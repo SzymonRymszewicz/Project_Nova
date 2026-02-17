@@ -5,6 +5,9 @@ function getDefaultApiBaseUrl(provider) {
 	if (provider === 'openai') {
 		return 'https://api.openai.com/v1';
 	}
+	if (provider === 'localmodel') {
+		return '';
+	}
 	return '';
 }
 
@@ -15,7 +18,94 @@ function getDefaultModel(provider) {
 	if (provider === 'openai') {
 		return 'gpt-3.5-turbo';
 	}
+	if (provider === 'localmodel') {
+		return '';
+	}
 	return '';
+}
+
+function isLocalModelProvider(provider) {
+	return (provider || '').toLowerCase() === 'localmodel';
+}
+
+function getModelPlaceholder(provider) {
+	if (provider === 'localhost') {
+		return 'Loaded model name in LM Studio';
+	}
+	if (provider === 'localmodel') {
+		return 'Select model file from Models/ChatModels';
+	}
+	return 'Model name';
+}
+
+function fetchLocalModelFiles() {
+	return fetch('/api/settings', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ action: 'list_local_models' })
+	})
+		.then(r => r.json())
+		.then(result => {
+			if (!result || !result.success || !Array.isArray(result.models)) {
+				return [];
+			}
+			return result.models;
+		})
+		.catch(() => []);
+}
+
+function renderLocalModelPicker(providerValue) {
+	const pickerWrap = document.getElementById('local-model-picker-wrap');
+	const picker = document.getElementById('local-model-picker');
+	const refreshBtn = document.getElementById('local-model-refresh');
+	const modelInput = document.getElementById('model');
+	const apiBaseUrl = document.getElementById('api-base-url');
+	const apiKey = document.getElementById('apikey');
+	if (!pickerWrap || !picker || !modelInput || !apiBaseUrl || !apiKey) {
+		return;
+	}
+
+	const localMode = isLocalModelProvider(providerValue);
+	pickerWrap.style.display = localMode ? '' : 'none';
+	apiBaseUrl.disabled = localMode;
+	apiKey.disabled = localMode;
+
+	if (!localMode) {
+		return;
+	}
+
+	fetchLocalModelFiles().then(files => {
+		picker.innerHTML = '';
+		const emptyOption = document.createElement('option');
+		emptyOption.value = '';
+		emptyOption.textContent = files.length ? 'Select model file' : 'No files found';
+		picker.appendChild(emptyOption);
+
+		files.forEach(file => {
+			const option = document.createElement('option');
+			option.value = file;
+			option.textContent = file;
+			picker.appendChild(option);
+		});
+
+		const currentModel = (modelInput.value || '').trim();
+		if (currentModel && files.includes(currentModel)) {
+			picker.value = currentModel;
+		} else if (files.length && !currentModel) {
+			picker.value = files[0];
+			modelInput.value = files[0];
+			if (settingsDraft) {
+				settingsDraft.model = files[0];
+			}
+		}
+	});
+
+	if (refreshBtn && !refreshBtn.dataset.bound) {
+		refreshBtn.dataset.bound = '1';
+		refreshBtn.addEventListener('click', () => {
+			renderLocalModelPicker('localmodel');
+		});
+	}
 }
 
 function resolveModelValue(model, provider) {
@@ -28,7 +118,7 @@ function getGenerationDefaultSettings() {
 		temperature: 0.7,
 		max_tokens: 10000,
 		max_response_length: 300,
-		stop_strings: ['User', 'User:'],
+		stop_strings: [],
 		top_k: 40,
 		enable_repeat_penalty: true,
 		repeat_penalty: 1.0,
@@ -132,7 +222,7 @@ function showSettings() {
 			const temp = settings.temperature ?? 0.7;
 			const tokens = settings.max_tokens ?? 10000;
 			const maxResponseLength = settings.max_response_length ?? 300;
-			const stopStrings = formatStopStringsForInput(settings.stop_strings ?? ['User', 'User:']);
+			const stopStrings = formatStopStringsForInput(settings.stop_strings ?? []);
 			const topK = settings.top_k ?? 40;
 			const enableRepeatPenalty = settings.enable_repeat_penalty ?? true;
 			const repeatPenalty = settings.repeat_penalty ?? 1.0;
@@ -157,7 +247,7 @@ function showSettings() {
 				ui_font_size: uiFontSize,
 				chat_font_size: chatFontSize,
 				max_response_length: maxResponseLength,
-				stop_strings: normalizeStopStrings(settings.stop_strings ?? ['User', 'User:']),
+				stop_strings: normalizeStopStrings(settings.stop_strings ?? []),
 				top_k: topK,
 				enable_repeat_penalty: enableRepeatPenalty,
 				repeat_penalty: repeatPenalty,
@@ -171,7 +261,7 @@ function showSettings() {
 			lastSavedTheme = normalizedSettings.theme || 'default';
 			lastSavedSettings = { ...normalizedSettings };
 			settingsDraft = { ...normalizedSettings };
-			const modelPlaceholder = providerValue === 'localhost' ? 'Loaded model name in LM Studio' : 'Model name';
+			const modelPlaceholder = getModelPlaceholder(providerValue);
 			container.innerHTML = `
 				<div class="settings-grid masonry-grid settings-layout-fixed">
 					<div class="settings-group">
@@ -214,9 +304,10 @@ function showSettings() {
 					</div>
 					<div class="settings-group">
 						<h3>API Client</h3>
-						<div class="setting-item"><label class="setting-label">API Provider</label><select class="setting-select" id="provider"><option value="localhost" ${providerValue === 'localhost' ? 'selected' : ''}>Localhost (LM Studio)</option><option value="openai" ${providerValue === 'openai' ? 'selected' : ''}>OpenAI</option></select></div>
+						<div class="setting-item"><label class="setting-label">API Provider</label><select class="setting-select" id="provider"><option value="localhost" ${providerValue === 'localhost' ? 'selected' : ''}>Localhost (LM Studio)</option><option value="localmodel" ${providerValue === 'localmodel' ? 'selected' : ''}>LocalModel (Direct File)</option><option value="openai" ${providerValue === 'openai' ? 'selected' : ''}>OpenAI</option></select></div>
 						<div class="setting-item"><label class="setting-label">API Base URL</label><input type="text" class="setting-input" value="${apiBaseUrlValue}" id="api-base-url"></div>
 						<div class="setting-item"><label class="setting-label">Model</label><input type="text" class="setting-input" value="${modelValue}" placeholder="${modelPlaceholder}" id="model"></div>
+						<div class="setting-item" id="local-model-picker-wrap" style="display:${providerValue === 'localmodel' ? 'block' : 'none'};"><label class="setting-label">Local Model File</label><div class="api-test-row"><select class="setting-select" id="local-model-picker"><option value="">Loading...</option></select><button class="btn btn-secondary" id="local-model-refresh" type="button">Refresh</button></div></div>
 						<div class="setting-item"><label class="setting-label">API Key</label><input type="password" class="setting-input" placeholder="Enter API key" id="apikey" value="${apiKeyValue}"></div>
 						<div class="setting-item api-test-row"><button class="btn btn-secondary" id="api-test-btn" type="button">Test Connection</button><div class="api-test-result" id="api-test-result"></div></div>
 					</div>
@@ -241,6 +332,7 @@ function showSettings() {
 			loadThemes(settings.theme || 'default');
 			attachScopedRestoreButtons(container);
 			bindSettingsDraft();
+			renderLocalModelPicker(providerValue);
 			applyFontSizes(uiFontSize, chatFontSize);
 		});
 }
@@ -299,6 +391,7 @@ function bindSettingsDraft() {
 	const enableTopPMin = document.getElementById('enable-top-p-min');
 	const topPMin = document.getElementById('top-p-min');
 	const provider = document.getElementById('provider');
+	const localModelPicker = document.getElementById('local-model-picker');
 	const apiBaseUrl = document.getElementById('api-base-url');
 	const model = document.getElementById('model');
 	const apiKey = document.getElementById('apikey');
@@ -394,8 +487,16 @@ function bindSettingsDraft() {
 					model.value = nextDefaultModel;
 					settingsDraft.model = nextDefaultModel;
 				}
-				model.placeholder = nextProvider === 'localhost' ? 'Loaded model name in LM Studio' : 'Model name';
+				model.placeholder = getModelPlaceholder(nextProvider);
 			}
+
+			renderLocalModelPicker(nextProvider);
+		});
+	}
+	if (localModelPicker && model) {
+		localModelPicker.addEventListener('change', () => {
+			model.value = localModelPicker.value;
+			settingsDraft.model = localModelPicker.value;
 		});
 	}
 	if (apiBaseUrl) {
@@ -600,7 +701,7 @@ function normalizeAndApplySettingsState(settings) {
 	normalized.temperature = normalized.temperature ?? 0.7;
 	normalized.max_tokens = normalized.max_tokens ?? 10000;
 	normalized.max_response_length = normalized.max_response_length ?? 300;
-	normalized.stop_strings = normalizeStopStrings(normalized.stop_strings ?? ['User', 'User:']);
+	normalized.stop_strings = normalizeStopStrings(normalized.stop_strings ?? []);
 	normalized.top_k = normalized.top_k ?? 40;
 	normalized.enable_repeat_penalty = normalized.enable_repeat_penalty ?? true;
 	normalized.repeat_penalty = normalized.repeat_penalty ?? 1.0;
@@ -713,7 +814,7 @@ function updateSettings(settings, options = {}) {
 	}
 	tokens.value = settings.max_tokens ?? 10000;
 	maxResponseLength.value = settings.max_response_length ?? 300;
-	stopStrings.value = formatStopStringsForInput(settings.stop_strings ?? ['User', 'User:']);
+	stopStrings.value = formatStopStringsForInput(settings.stop_strings ?? []);
 	topK.value = settings.top_k ?? 40;
 	enableRepeatPenalty.checked = settings.enable_repeat_penalty ?? true;
 	repeatPenalty.value = settings.repeat_penalty ?? 1.0;
@@ -727,7 +828,7 @@ function updateSettings(settings, options = {}) {
 	const providerValue = settings.api_provider || 'localhost';
 	const apiBaseUrlValue = settings.api_base_url || getDefaultApiBaseUrl(providerValue);
 	model.value = resolveModelValue(settings.model, providerValue);
-	model.placeholder = providerValue === 'localhost' ? 'Loaded model name in LM Studio' : 'Model name';
+	model.placeholder = getModelPlaceholder(providerValue);
 	apiBaseUrl.value = apiBaseUrlValue;
 	apiKey.value = settings.api_key || '';
 	uiFontSize.value = settings.ui_font_size ?? settings.font_size ?? 12;
@@ -740,6 +841,7 @@ function updateSettings(settings, options = {}) {
 	if (provider) {
 		provider.value = providerValue;
 	}
+	renderLocalModelPicker(providerValue);
 
 	if (theme) {
 		loadThemes(settings.theme || 'default');

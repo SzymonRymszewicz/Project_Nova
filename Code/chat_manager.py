@@ -134,6 +134,8 @@ class ChatManager:
                 chat["last_opened"] = stored.get("last_opened")
             elif not chat.get("last_opened"):
                 chat["last_opened"] = chat.get("last_updated", "")
+            if stored.get("persona_name"):
+                chat["persona_name"] = stored.get("persona_name")
 
         chats.sort(key=lambda x: x.get("last_opened") or x.get("last_updated", ""), reverse=True)
         return chats
@@ -155,6 +157,7 @@ class ChatManager:
             "id": chat_id,
             "bot": bot_name,
             "title": title,
+            "persona_name": (persona_name or "User"),
             "created": timestamp,
             "last_updated": timestamp,
             "last_opened": datetime.now().strftime("%Y%m%d_%H%M%S_%f"),
@@ -178,6 +181,38 @@ class ChatManager:
         
         print(f"[ChatManager] Created chat '{chat_id}' at {chat_folder}")
         return chat_info
+
+    def get_chat_info(self, chat_id):
+        if not chat_id:
+            return None
+        for chat in self._load_chats_list():
+            if chat.get("id") == chat_id:
+                return chat
+        return None
+
+    def get_chat_persona(self, chat_id):
+        chat_info = self.get_chat_info(chat_id)
+        if not chat_info:
+            return None
+        persona_name = (chat_info.get("persona_name") or "").strip()
+        return persona_name or None
+
+    def set_chat_persona(self, chat_id, persona_name):
+        if not chat_id:
+            return False
+        resolved = (persona_name or "").strip() or "User"
+        chats_list = self._load_chats_list()
+        changed = False
+        for chat in chats_list:
+            if chat.get("id") != chat_id:
+                continue
+            if chat.get("persona_name") != resolved:
+                chat["persona_name"] = resolved
+                changed = True
+            break
+        if changed:
+            self._save_chats_list(chats_list)
+        return changed
 
     def _expand_macros(self, text, bot_name, persona_name=None):
         if text is None:
@@ -508,6 +543,119 @@ class ChatManager:
         self._save_chats_list(chats_list)
 
         return iam_messages
+
+    def edit_message(self, chat_id, bot_name, message_index, content):
+        if not chat_id or not bot_name:
+            return None
+
+        try:
+            index = int(message_index)
+        except Exception:
+            return None
+
+        new_content = str(content or "").strip()
+        if not new_content:
+            return None
+
+        if chat_id != self.current_chat_id or bot_name != self.current_bot_name:
+            messages = self.load_chat(chat_id, bot_name)
+            if messages is None:
+                return None
+
+        if index < 0 or index >= len(self.current_chat_messages):
+            return None
+
+        message = self.current_chat_messages[index] or {}
+        role = message.get("role")
+        if role not in ("user", "assistant"):
+            return None
+
+        self.current_chat_messages[index]["content"] = new_content
+        self._save_chat_messages(chat_id, self.current_chat_messages, bot_name)
+
+        chats_list = self._load_chats_list()
+        for chat_info in chats_list:
+            if chat_info.get("id") == chat_id:
+                chat_info["last_updated"] = datetime.now().strftime("%Y%m%d_%H%M%S")
+                chat_info["message_count"] = len(self.current_chat_messages)
+                break
+        self._save_chats_list(chats_list)
+
+        return self.current_chat_messages
+
+    def delete_message(self, chat_id, bot_name, message_index):
+        if not chat_id or not bot_name:
+            return None
+
+        try:
+            index = int(message_index)
+        except Exception:
+            return None
+
+        if chat_id != self.current_chat_id or bot_name != self.current_bot_name:
+            messages = self.load_chat(chat_id, bot_name)
+            if messages is None:
+                return None
+
+        if index < 0 or index >= len(self.current_chat_messages):
+            return None
+
+        del self.current_chat_messages[index]
+        self._save_chat_messages(chat_id, self.current_chat_messages, bot_name)
+
+        chats_list = self._load_chats_list()
+        for chat_info in chats_list:
+            if chat_info.get("id") == chat_id:
+                chat_info["last_updated"] = datetime.now().strftime("%Y%m%d_%H%M%S")
+                chat_info["message_count"] = len(self.current_chat_messages)
+                break
+        self._save_chats_list(chats_list)
+
+        return self.current_chat_messages
+
+    def insert_message(self, chat_id, bot_name, message_index, role, content):
+        if not chat_id or not bot_name:
+            return None
+
+        try:
+            index = int(message_index)
+        except Exception:
+            return None
+
+        message_role = str(role or "").strip().lower()
+        if message_role not in ("user", "assistant"):
+            return None
+
+        message_content = str(content or "").strip()
+        if not message_content:
+            return None
+
+        if chat_id != self.current_chat_id or bot_name != self.current_bot_name:
+            messages = self.load_chat(chat_id, bot_name)
+            if messages is None:
+                return None
+
+        if index < 0:
+            index = 0
+        if index > len(self.current_chat_messages):
+            index = len(self.current_chat_messages)
+
+        self.current_chat_messages.insert(index, {
+            "role": message_role,
+            "content": message_content,
+            "timestamp": datetime.now().isoformat()
+        })
+        self._save_chat_messages(chat_id, self.current_chat_messages, bot_name)
+
+        chats_list = self._load_chats_list()
+        for chat_info in chats_list:
+            if chat_info.get("id") == chat_id:
+                chat_info["last_updated"] = datetime.now().strftime("%Y%m%d_%H%M%S")
+                chat_info["message_count"] = len(self.current_chat_messages)
+                break
+        self._save_chats_list(chats_list)
+
+        return self.current_chat_messages
         
     def get_all_chats(self):
         """Get a list of all chats"""

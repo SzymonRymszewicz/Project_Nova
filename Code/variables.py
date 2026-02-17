@@ -1,7 +1,7 @@
 # All global variables should be defined here. This file is imported by all modules, so we can define variables that are shared across the entire project here.
 
 __author__ = "Szymon Rymszewicz"
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __name__ = "Project Nova " + __version__
 
 LOCALHOST = 5067 # The port that the GUI server will run on. You can change this if you want to run the GUI server on a different port.

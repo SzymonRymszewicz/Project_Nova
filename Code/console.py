@@ -39,6 +39,7 @@ class ConsoleWindow:
 		self._closed = False
 		self._command_handler = None
 		self._input_waiting = False
+		self._output_hook = None
 
 		self.root = tk.Tk()
 		self.root.title(title)
@@ -146,6 +147,11 @@ class ConsoleWindow:
 		self._text.configure(state="disabled")
 		self._text.see("end")
 		self._on_text_scroll(*self._text.yview())
+		if self._output_hook:
+			try:
+				self._output_hook(text, tag)
+			except Exception:
+				pass
 
 	def write(self, text):
 		if not text or self._closed:
@@ -188,6 +194,9 @@ class ConsoleWindow:
 
 	def set_command_handler(self, handler):
 		self._command_handler = handler
+
+	def set_output_hook(self, hook):
+		self._output_hook = hook
 
 	def show_help(self):
 		self._show_help()

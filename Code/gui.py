@@ -358,6 +358,30 @@ def _build_handler(callbacks):
 						elif action == 'switch_iam' and callbacks.get('on_chat_switch_iam'):
 							result = callbacks['on_chat_switch_iam'](data.get('chat_id'), data.get('bot_name'), data.get('iam_set'), data.get('persona_name'))
 							response_data = json.dumps(result or {"success": False})
+						elif action == 'edit_message' and callbacks.get('on_chat_edit_message'):
+							result = callbacks['on_chat_edit_message'](data.get('chat_id'), data.get('bot_name'), data.get('message_index'), data.get('content'))
+							response_data = json.dumps(result or {"success": False})
+						elif action == 'delete_message' and callbacks.get('on_chat_delete_message'):
+							result = callbacks['on_chat_delete_message'](data.get('chat_id'), data.get('bot_name'), data.get('message_index'))
+							response_data = json.dumps(result or {"success": False})
+						elif action == 'regenerate_message' and callbacks.get('on_chat_regenerate_message'):
+							result = callbacks['on_chat_regenerate_message'](
+								data.get('chat_id'),
+								data.get('bot_name'),
+								data.get('message_index'),
+								data.get('persona_id'),
+								data.get('persona_name')
+							)
+							response_data = json.dumps(result or {"success": False})
+						elif action == 'continue_message' and callbacks.get('on_chat_continue_message'):
+							result = callbacks['on_chat_continue_message'](
+								data.get('chat_id'),
+								data.get('bot_name'),
+								data.get('message_index'),
+								data.get('persona_id'),
+								data.get('persona_name')
+							)
+							response_data = json.dumps(result or {"success": False})
 						else:
 							response_data = json.dumps({})
 					else:
@@ -478,6 +502,9 @@ def _build_handler(callbacks):
 						if action == 'update' and callbacks.get('on_settings_update'):
 							result = callbacks['on_settings_update'](data.get('settings', {}))
 							response_data = json.dumps({"success": result})
+						elif action == 'list_local_models' and callbacks.get('on_settings_list_local_models'):
+							result = callbacks['on_settings_list_local_models']()
+							response_data = json.dumps(result or {"success": False, "models": []})
 						else:
 							response_data = json.dumps({"success": False})
 					else:
@@ -558,8 +585,9 @@ def _build_handler(callbacks):
 
 
 def start_gui_server(on_message=None, on_bot_list=None, on_bot_select=None, on_bot_create=None, on_bot_update=None, on_bot_delete=None, on_bot_iam=None, on_bot_images=None,
-                     on_chat_list=None, on_chat_create=None, on_chat_delete=None, on_chat_switch_iam=None, on_get_last_chat=None, on_load_chat=None, on_settings_get=None, 
-					 on_settings_update=None, on_settings_reset=None, on_settings_test=None, on_personas_list=None, on_persona_select=None, 
+                     on_chat_list=None, on_chat_create=None, on_chat_delete=None, on_chat_switch_iam=None, on_chat_edit_message=None, on_chat_delete_message=None,
+					 on_chat_regenerate_message=None, on_chat_continue_message=None, on_get_last_chat=None, on_load_chat=None, on_settings_get=None,
+					 on_settings_update=None, on_settings_reset=None, on_settings_test=None, on_settings_list_local_models=None, on_personas_list=None, on_persona_select=None,
 					 on_persona_create=None, on_persona_update=None, on_persona_delete=None, on_persona_images=None):
 	callbacks = {
 		'on_message': on_message,
@@ -574,12 +602,17 @@ def start_gui_server(on_message=None, on_bot_list=None, on_bot_select=None, on_b
 		'on_chat_create': on_chat_create,
 		'on_chat_delete': on_chat_delete,
 		'on_chat_switch_iam': on_chat_switch_iam,
+		'on_chat_edit_message': on_chat_edit_message,
+		'on_chat_delete_message': on_chat_delete_message,
+		'on_chat_regenerate_message': on_chat_regenerate_message,
+		'on_chat_continue_message': on_chat_continue_message,
 		'on_get_last_chat': on_get_last_chat,
 		'on_load_chat': on_load_chat,
 		'on_settings_get': on_settings_get,
 		'on_settings_update': on_settings_update,
 		'on_settings_reset': on_settings_reset,
 		'on_settings_test': on_settings_test,
+		'on_settings_list_local_models': on_settings_list_local_models,
 		'on_personas_list': on_personas_list,
 		'on_persona_select': on_persona_select,
 		'on_persona_create': on_persona_create,
