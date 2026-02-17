@@ -70,8 +70,146 @@ function renderCurrentChat() {
 		return;
 	}
 
-	currentChatMessages.forEach(msg => {
-		addMessage(msg.content, msg.role === 'user', msg.timestamp);
+	currentChatMessages.forEach((msg, index) => {
+		const nextMessage = currentChatMessages[index + 1] || null;
+		const hasAssistantReplyAfter = !!(nextMessage && nextMessage.role === 'assistant');
+		addMessage(msg.content, msg.role === 'user', msg.timestamp, index, msg.role, !!msg.thinking, hasAssistantReplyAfter);
+	});
+}
+
+function persistEditedMessage(messageIndex, content) {
+	if (!currentChatId || !currentBotName) {
+		return Promise.resolve({ success: false });
+	}
+	return fetch('/api/chats', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({
+			action: 'edit_message',
+			chat_id: currentChatId,
+			bot_name: currentBotName,
+			message_index: messageIndex,
+			content
+		})
+	}).then(r => r.json());
+}
+
+function runChatMessageAction(action, messageIndex) {
+	if (!currentChatId || !currentBotName || !Number.isInteger(messageIndex)) {
+		return Promise.resolve({ success: false, message: 'Invalid chat state.' });
+	}
+	return fetch('/api/chats', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({
+			action,
+			chat_id: currentChatId,
+			bot_name: currentBotName,
+			message_index: messageIndex,
+			persona_id: (currentPersonaInfo && currentPersonaInfo.id) ? currentPersonaInfo.id : null,
+			persona_name: (currentPersonaInfo && currentPersonaInfo.name) ? currentPersonaInfo.name : null
+		})
+	}).then(r => r.json());
+}
+
+function applyChatActionResult(result) {
+	if (!result || !result.success) {
+		return false;
+	}
+	if (Array.isArray(result.messages)) {
+		currentChatMessages = result.messages;
+	}
+	renderCurrentChat();
+	return true;
+}
+
+function startInlineMessageEdit(options) {
+	const { bubble, bubbleWrap, messageIndex, originalText } = options || {};
+	if (!bubble || !bubbleWrap || !Number.isInteger(messageIndex) || bubbleWrap.dataset.editing === '1') {
+		return;
+	}
+	bubbleWrap.dataset.editing = '1';
+
+	const editInput = document.createElement('textarea');
+	editInput.className = 'message-edit-input';
+	editInput.value = originalText || '';
+	editInput.rows = 3;
+
+	const actions = document.createElement('div');
+	actions.className = 'message-edit-actions';
+	const confirmBtn = document.createElement('button');
+	confirmBtn.type = 'button';
+	confirmBtn.className = 'message-edit-confirm';
+	confirmBtn.textContent = '✔';
+	const cancelBtn = document.createElement('button');
+	cancelBtn.type = 'button';
+	cancelBtn.className = 'message-edit-cancel';
+	cancelBtn.textContent = '✘';
+	actions.appendChild(confirmBtn);
+	actions.appendChild(cancelBtn);
+
+	bubble.replaceWith(editInput);
+	bubbleWrap.appendChild(actions);
+	editInput.focus();
+	editInput.setSelectionRange(editInput.value.length, editInput.value.length);
+
+	const handleOutsidePointerDown = event => {
+		if (!bubbleWrap.contains(event.target)) {
+			restore();
+		}
+	};
+	document.addEventListener('pointerdown', handleOutsidePointerDown, true);
+
+	const restore = () => {
+		document.removeEventListener('pointerdown', handleOutsidePointerDown, true);
+		if (actions.parentNode === bubbleWrap) {
+			bubbleWrap.removeChild(actions);
+		}
+		if (editInput.parentNode === bubbleWrap) {
+			editInput.replaceWith(bubble);
+		}
+		delete bubbleWrap.dataset.editing;
+	};
+
+	confirmBtn.addEventListener('click', () => {
+		const nextText = editInput.value.trim();
+		if (!nextText || nextText === (originalText || '')) {
+			restore();
+			return;
+		}
+		confirmBtn.disabled = true;
+		cancelBtn.disabled = true;
+		persistEditedMessage(messageIndex, nextText)
+			.then(result => {
+				if (!result || !result.success) {
+					confirmBtn.disabled = false;
+					cancelBtn.disabled = false;
+					return;
+				}
+				if (Array.isArray(result.messages)) {
+					currentChatMessages = result.messages;
+				} else if (Array.isArray(currentChatMessages) && currentChatMessages[messageIndex]) {
+					currentChatMessages[messageIndex].content = nextText;
+				}
+				renderCurrentChat();
+			})
+			.catch(() => {
+				confirmBtn.disabled = false;
+				cancelBtn.disabled = false;
+			});
+	});
+
+	cancelBtn.addEventListener('click', restore);
+
+	editInput.addEventListener('keydown', event => {
+		if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+			event.preventDefault();
+			confirmBtn.click();
+		}
+		if (event.key === 'Escape') {
+			event.preventDefault();
+			cancelBtn.click();
+		}
 	});
 }
 
@@ -113,7 +251,7 @@ function renderChatIamHeaderPicker() {
 			}
 
 			if (!chatBotIamSelections[currentBotName] || !setNames.includes(chatBotIamSelections[currentBotName])) {
-				chatBotIamSelections[currentBotName] = (data && data.current_set && setNames.includes(data.current_set)) ? data.current_set : setNames[0];
+				chatBotIamSelections[currentBotName] = setNames[0];
 			}
 
 			const selected = chatBotIamSelections[currentBotName];
@@ -169,7 +307,7 @@ function renderChatIamHeaderPicker() {
 		});
 }
 
-function addMessage(text, isUser, timestamp) {
+function addMessage(text, isUser, timestamp, messageIndex = null, role = null, isThinking = false, hasAssistantReplyAfter = false) {
 	const msg = document.createElement('div');
 	msg.className = 'message' + (isUser ? ' user' : '');
 	const avatar = document.createElement('div');
@@ -198,9 +336,154 @@ function addMessage(text, isUser, timestamp) {
 
 	const content = document.createElement('div');
 	content.className = 'message-content';
+	const bubbleWrap = document.createElement('div');
+	bubbleWrap.className = 'message-bubble-wrap';
 	const bubble = document.createElement('div');
 	bubble.className = 'message-bubble';
 	bubble.textContent = text;
+	if (isThinking) {
+		bubble.classList.add('message-thinking');
+	}
+	bubbleWrap.appendChild(bubble);
+
+	if (Number.isInteger(messageIndex)) {
+		const messageRole = role || (isUser ? 'user' : 'assistant');
+		const actionsWrap = document.createElement('div');
+		actionsWrap.className = 'message-actions';
+
+		const createActionButton = (className, title, ariaLabel, iconText, onClick) => {
+			const btn = document.createElement('button');
+			btn.type = 'button';
+			btn.className = `message-action-btn ${className}`;
+			btn.title = title;
+			btn.setAttribute('aria-label', ariaLabel);
+			btn.textContent = iconText;
+			btn.addEventListener('click', onClick);
+			return btn;
+		};
+
+		const editBtn = createActionButton('message-action-edit', 'Edit message', 'Edit message', '✎', () => {
+			startInlineMessageEdit({
+				bubble,
+				bubbleWrap,
+				messageIndex,
+				originalText: text
+			});
+		});
+		actionsWrap.appendChild(editBtn);
+
+		if (messageRole === 'assistant') {
+			const setActionButtonsDisabled = (disabled) => {
+				Array.from(actionsWrap.querySelectorAll('.message-action-btn')).forEach(btn => {
+					btn.disabled = !!disabled;
+				});
+			};
+
+			const startThinkingReplace = () => {
+				bubble.dataset.originalText = bubble.textContent || '';
+				bubble.textContent = 'Thinking';
+				bubble.classList.add('message-thinking');
+				setActionButtonsDisabled(true);
+			};
+
+			const stopThinkingReplace = () => {
+				if (Object.prototype.hasOwnProperty.call(bubble.dataset, 'originalText')) {
+					bubble.textContent = bubble.dataset.originalText;
+					delete bubble.dataset.originalText;
+				}
+				bubble.classList.remove('message-thinking');
+				setActionButtonsDisabled(false);
+			};
+
+			const startThinking = () => {
+				bubble.classList.add('message-thinking-append');
+				setActionButtonsDisabled(true);
+			};
+
+			const stopThinking = () => {
+				bubble.classList.remove('message-thinking-append');
+				setActionButtonsDisabled(false);
+			};
+
+			const regenerateBtn = createActionButton('message-action-regenerate', 'Regenerate message', 'Regenerate message', '↻', () => {
+				startThinkingReplace();
+				runChatMessageAction('regenerate_message', messageIndex)
+					.then(result => {
+						if (!applyChatActionResult(result)) {
+							stopThinkingReplace();
+						}
+					})
+					.catch(() => {
+						stopThinkingReplace();
+					});
+			});
+			actionsWrap.appendChild(regenerateBtn);
+
+			const continueBtn = createActionButton('message-action-continue', 'Continue message', 'Continue message', '→', () => {
+				startThinking();
+				runChatMessageAction('continue_message', messageIndex)
+					.then(result => {
+						if (!applyChatActionResult(result)) {
+							stopThinking();
+						}
+					})
+					.catch(() => {
+						stopThinking();
+					});
+			});
+			actionsWrap.appendChild(continueBtn);
+		} else if (messageRole === 'user' && !hasAssistantReplyAfter) {
+			const regenerateUserBtn = createActionButton('message-action-regenerate', 'Generate bot reply', 'Generate bot reply', '↻', () => {
+				regenerateUserBtn.disabled = true;
+				const placeholderMessage = {
+					role: 'assistant',
+					content: 'Thinking',
+					timestamp: new Date().toISOString(),
+					thinking: true,
+					temp_regen: true
+				};
+				if (Array.isArray(currentChatMessages)) {
+					const insertAt = Math.min(currentChatMessages.length, messageIndex + 1);
+					currentChatMessages.splice(insertAt, 0, placeholderMessage);
+				}
+				renderCurrentChat();
+				runChatMessageAction('regenerate_message', messageIndex)
+					.then(result => {
+						if (!applyChatActionResult(result)) {
+							if (Array.isArray(currentChatMessages)) {
+								currentChatMessages = currentChatMessages.filter(msg => !(msg && msg.temp_regen));
+							}
+							renderCurrentChat();
+							regenerateUserBtn.disabled = false;
+						}
+					})
+					.catch(() => {
+						if (Array.isArray(currentChatMessages)) {
+							currentChatMessages = currentChatMessages.filter(msg => !(msg && msg.temp_regen));
+						}
+						renderCurrentChat();
+						regenerateUserBtn.disabled = false;
+					});
+			});
+			actionsWrap.appendChild(regenerateUserBtn);
+		}
+
+		const deleteBtn = createActionButton('message-action-delete', 'Delete message', 'Delete message', '🗑', () => {
+			deleteBtn.disabled = true;
+			runChatMessageAction('delete_message', messageIndex)
+				.then(result => {
+					if (!applyChatActionResult(result)) {
+						deleteBtn.disabled = false;
+					}
+				})
+				.catch(() => {
+					deleteBtn.disabled = false;
+				});
+		});
+		actionsWrap.appendChild(deleteBtn);
+
+		bubbleWrap.appendChild(actionsWrap);
+	}
 	const meta = document.createElement('div');
 	meta.className = 'message-time';
 	const showTime = shouldShowTimestamps();
@@ -216,7 +499,7 @@ function addMessage(text, isUser, timestamp) {
 	}
 	meta.appendChild(name);
 	meta.appendChild(timeText);
-	content.appendChild(bubble);
+	content.appendChild(bubbleWrap);
 	content.appendChild(meta);
 	msg.appendChild(avatar);
 	msg.appendChild(content);
@@ -236,6 +519,9 @@ function sendMessage() {
 	renderCurrentChat();
 	messageInput.value = '';
 	resetMessageInputHeight();
+	const thinkingTimestamp = new Date().toISOString();
+	currentChatMessages.push({ role: 'assistant', content: 'Thinking', timestamp: thinkingTimestamp, thinking: true });
+	renderCurrentChat();
 	fetch('/api/message', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -243,22 +529,89 @@ function sendMessage() {
 			message: text,
 			chat_id: currentChatId,
 			bot_name: currentBotName,
-			persona_id: (currentPersonaInfo && currentPersonaInfo.id) ? currentPersonaInfo.id : 'User',
-			persona_name: (currentPersonaInfo && currentPersonaInfo.name) ? currentPersonaInfo.name : 'User'
+			persona_id: (currentPersonaInfo && currentPersonaInfo.id) ? currentPersonaInfo.id : null,
+			persona_name: (currentPersonaInfo && currentPersonaInfo.name) ? currentPersonaInfo.name : null
 		})
 	})
 		.then(r => r.json())
 		.then(data => {
+			if (Array.isArray(currentChatMessages) && currentChatMessages.length) {
+				const lastIndex = currentChatMessages.length - 1;
+				if (currentChatMessages[lastIndex] && currentChatMessages[lastIndex].thinking) {
+					currentChatMessages.splice(lastIndex, 1);
+				}
+			}
 			if (data.response) {
 				const responseTimestamp = new Date().toISOString();
-				addMessage(data.response, false, responseTimestamp);
 				currentChatMessages.push({ role: 'assistant', content: data.response, timestamp: responseTimestamp });
+				renderCurrentChat();
 				fetch('/api/message', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ message: data.response, save_response: true, chat_id: currentChatId, bot_name: currentBotName })
 				});
+			} else {
+				renderCurrentChat();
 			}
+		})
+		.catch(() => {
+			if (Array.isArray(currentChatMessages) && currentChatMessages.length) {
+				const lastIndex = currentChatMessages.length - 1;
+				if (currentChatMessages[lastIndex] && currentChatMessages[lastIndex].thinking) {
+					currentChatMessages.splice(lastIndex, 1);
+				}
+			}
+			renderCurrentChat();
+		});
+}
+
+function ensureFirstIamLoadedOnStartup() {
+	if (!currentBotName || !currentChatId) {
+		return Promise.resolve();
+	}
+	const hasUserMessage = Array.isArray(currentChatMessages) && currentChatMessages.some(msg => (msg || {}).role === 'user');
+	if (hasUserMessage) {
+		return Promise.resolve();
+	}
+
+	return fetch('/api/bot/iam', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ action: 'list_sets', bot_name: currentBotName })
+	})
+		.then(r => r.json())
+		.then(data => {
+			const defaultIamSet = (typeof DEFAULT_IAM_SET !== 'undefined' && DEFAULT_IAM_SET) ? DEFAULT_IAM_SET : 'IAM_1';
+			const setNames = (typeof getSortedIamSetNames === 'function')
+				? getSortedIamSetNames((data && data.sets) ? data.sets : [defaultIamSet])
+				: ((data && data.sets) || [defaultIamSet]);
+			if (!setNames || !setNames.length) {
+				return;
+			}
+
+			const firstSet = setNames[0];
+			return fetch('/api/chats', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					action: 'switch_iam',
+					chat_id: currentChatId,
+					bot_name: currentBotName,
+					iam_set: firstSet,
+					persona_name: (currentPersonaInfo && currentPersonaInfo.name) ? currentPersonaInfo.name : 'User'
+				})
+			})
+				.then(r => r.json())
+				.then(result => {
+					if (!result || !result.success) {
+						return;
+					}
+					chatBotIamSelections[currentBotName] = firstSet;
+					currentChatMessages = result.messages || [];
+				});
+		})
+		.catch(() => {
+			// Keep existing chat if IAM sync fails.
 		});
 }
 
@@ -289,7 +642,9 @@ function autoLoadLastChat(settings) {
 						if (botData.success) {
 							currentBotInfo = botData.bot;
 						}
-						switchToLastChat();
+						ensureFirstIamLoadedOnStartup().finally(() => {
+							switchToLastChat();
+						});
 					});
 			}
 		});

@@ -1,8 +1,10 @@
 # This file contains the main application class. It is responsible for initializing the application and providing the main entry point for the program.
 
 import builtins
+from datetime import datetime
 import json
 import os
+from pathlib import Path
 import sys
 import threading
 import urllib.error
@@ -24,11 +26,13 @@ class Application:
     def __init__(self):
         self.console = ConsoleWindow()
         self.console.set_command_handler(self._on_console_command)
+        self.console.set_output_hook(self._on_console_output)
         self._install_console_redirects()
         self._original_print = builtins.print
         self._gui_server = None
         self._gui_thread = None
         self._gui_url = None
+        self._debug_session_log_path = None
         
         # Initialize managers
         self.bot_manager = BotManager()
@@ -39,7 +43,13 @@ class Application:
         # Track current active bot and persona
         self.current_bot_name = None
         self.current_persona_id = None
-        self.prompt_pipeline = PromptPipeline(self.bot_manager, self.chat_manager, self.persona_manager, self.settings_manager)
+        self.prompt_pipeline = PromptPipeline(
+            self.bot_manager,
+            self.chat_manager,
+            self.persona_manager,
+            self.settings_manager,
+            debug_logger=self._debug_log
+        )
 
         self._app_thread = threading.Thread(target=self._run_app, daemon=True)
         self._app_thread.start()
@@ -86,33 +96,148 @@ class Application:
         if self.settings_manager.get("debug_mode", False):
             self._original_print(*args, **kwargs)
 
+    def _get_debug_logs_folder(self):
+        nova_root = Path(__file__).resolve().parent.parent
+        candidates = [
+            nova_root / "Debug_logs",
+            nova_root / "Debug_Logs"
+        ]
+        for folder in candidates:
+            if folder.exists() and folder.is_dir():
+                return folder
+        fallback = candidates[0]
+        fallback.mkdir(parents=True, exist_ok=True)
+        return fallback
+
+    def _get_debug_session_log_path(self):
+        if self._debug_session_log_path is not None:
+            return self._debug_session_log_path
+        folder = self._get_debug_logs_folder()
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        self._debug_session_log_path = folder / f"debug_session_{timestamp}.txt"
+        return self._debug_session_log_path
+
+    def _write_console_session_log(self, text, tag):
+        if not self._is_debug_enabled():
+            return
+        if text is None:
+            return
+        path = self._get_debug_session_log_path()
+        try:
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+            with open(path, "a", encoding="utf-8") as file:
+                file.write(f"[{timestamp}] [{tag}] {text}")
+        except Exception:
+            return
+
+    def _on_console_output(self, text, tag="stdout"):
+        self._write_console_session_log(text, tag)
+
+    def _is_debug_enabled(self):
+        return bool(self.settings_manager.get("debug_mode", False))
+
+    def _mask_sensitive(self, value):
+        text = str(value or "")
+        if not text:
+            return ""
+        if len(text) <= 8:
+            return "*" * len(text)
+        return f"{text[:4]}...{text[-4:]}"
+
+    def _safe_debug_data(self, value):
+        if isinstance(value, dict):
+            safe = {}
+            for key, item in value.items():
+                key_name = str(key).lower()
+                if key_name in ("api_key", "authorization", "token", "password"):
+                    safe[key] = self._mask_sensitive(item)
+                else:
+                    safe[key] = self._safe_debug_data(item)
+            return safe
+        if isinstance(value, list):
+            return [self._safe_debug_data(item) for item in value]
+        return value
+
+    def _debug_log(self, event, **details):
+        if not self._is_debug_enabled():
+            return
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        safe_details = self._safe_debug_data(details)
+        payload = ""
+        if safe_details:
+            try:
+                payload = " " + json.dumps(safe_details, ensure_ascii=False)
+            except Exception:
+                payload = f" {safe_details}"
+        self._original_print(f"[DEBUG {timestamp}] {event}{payload}")
+
     def _start_gui(self):
         if self._gui_server is not None:
             return
 
         def _on_message(message, save_response=False, chat_id=None, bot_name=None, persona_id=None, persona_name=None):
             print(f"[GUI] Message: {message} (save_response={save_response})")
+            self._debug_log(
+                "message.received",
+                save_response=save_response,
+                chat_id=chat_id,
+                bot_name=bot_name,
+                persona_id=persona_id,
+                persona_name=persona_name,
+                message_length=len(str(message or ""))
+            )
             # Add message to current chat
             if save_response:
                 # This is a bot response, save it directly
                 if chat_id and bot_name:
                     self.chat_manager.add_message("assistant", message, chat_id, bot_name)
+                self._debug_log("message.saved_assistant", chat_id=chat_id, bot_name=bot_name)
             else:
                 # This is a user message
                 active_chat_id = chat_id or self.chat_manager.current_chat_id
                 active_bot_name = bot_name or self.current_bot_name
+                requested_persona_name = (persona_name or "").strip()
+                stored_persona_name = ""
+                if active_chat_id:
+                    stored_persona_name = (self.chat_manager.get_chat_persona(active_chat_id) or "").strip()
+
+                resolved_persona_name = requested_persona_name
+                if not resolved_persona_name or resolved_persona_name == "User":
+                    if stored_persona_name and stored_persona_name != "User":
+                        resolved_persona_name = stored_persona_name
+                    elif not resolved_persona_name:
+                        resolved_persona_name = stored_persona_name
+                if not resolved_persona_name:
+                    resolved_persona_name = "User"
+                self._debug_log(
+                    "message.context_resolved",
+                    active_chat_id=active_chat_id,
+                    active_bot_name=active_bot_name,
+                    requested_persona_name=requested_persona_name,
+                    stored_persona_name=stored_persona_name,
+                    resolved_persona_name=resolved_persona_name
+                )
                 if active_chat_id and active_bot_name:
                     self.chat_manager.add_message("user", message, active_chat_id, active_bot_name)
+                    self.chat_manager.set_chat_persona(active_chat_id, resolved_persona_name)
+                    self._debug_log(
+                        "message.saved_user",
+                        chat_id=active_chat_id,
+                        bot_name=active_bot_name,
+                        resolved_persona_name=resolved_persona_name
+                    )
 
                 reply, error = self.prompt_pipeline.generate_reply(
                     user_message=message,
                     bot_name=active_bot_name,
                     chat_id=active_chat_id,
                     persona_id=persona_id,
-                    persona_name=persona_name
+                    persona_name=resolved_persona_name
                 )
                 if error:
+                    self._debug_log("message.reply_error", error=error)
                     return f"API error: {error}"
+                self._debug_log("message.reply_success", reply_length=len(str(reply or "")))
                 return reply or "API error: LLM returned empty response."
 
             return ""
@@ -262,6 +387,159 @@ class Application:
             self.chat_manager.current_chat_id = chat_id
             self.current_bot_name = bot_name
             return {"success": True, "messages": result}
+
+        def _on_chat_edit_message(chat_id, bot_name, message_index, content):
+            result = self.chat_manager.edit_message(chat_id, bot_name, message_index, content)
+            if result is None:
+                return {"success": False, "message": "Failed to edit message"}
+            self.chat_manager.current_chat_id = chat_id
+            self.current_bot_name = bot_name
+            return {"success": True, "messages": result}
+
+        def _resolve_persona_name_for_chat(chat_id, requested_persona_name=None):
+            chosen = (requested_persona_name or "").strip()
+            stored = ""
+            if chat_id:
+                stored = (self.chat_manager.get_chat_persona(chat_id) or "").strip()
+            if not chosen or chosen == "User":
+                if stored and stored != "User":
+                    chosen = stored
+                elif not chosen:
+                    chosen = stored
+            if not chosen:
+                chosen = "User"
+            return chosen
+
+        def _merge_assistant_continuation(current_text, continuation_text):
+            base = str(current_text or "")
+            addition = str(continuation_text or "")
+            if not addition.strip():
+                return base
+
+            base_trimmed = base.rstrip()
+            addition_trimmed = addition.strip()
+            if not base_trimmed:
+                return addition_trimmed
+
+            base_lower = base_trimmed.lower()
+            addition_lower = addition_trimmed.lower()
+
+            if addition_lower in base_lower:
+                return base
+
+            max_overlap = min(len(base_trimmed), len(addition_trimmed))
+            overlap_size = 0
+            for size in range(max_overlap, 0, -1):
+                if base_lower.endswith(addition_lower[:size]):
+                    overlap_size = size
+                    break
+            if overlap_size > 0:
+                addition_trimmed = addition_trimmed[overlap_size:].lstrip()
+
+            if not addition_trimmed:
+                return base
+
+            separator = "" if base.endswith((" ", "\n", "\t")) else " "
+            return f"{base}{separator}{addition_trimmed}"
+
+        def _on_chat_delete_message(chat_id, bot_name, message_index):
+            result = self.chat_manager.delete_message(chat_id, bot_name, message_index)
+            if result is None:
+                return {"success": False, "message": "Failed to delete message"}
+            self.chat_manager.current_chat_id = chat_id
+            self.current_bot_name = bot_name
+            return {"success": True, "messages": result}
+
+        def _on_chat_regenerate_message(chat_id, bot_name, message_index, persona_id=None, persona_name=None):
+            messages = self.chat_manager.load_chat(chat_id, bot_name)
+            if messages is None:
+                return {"success": False, "message": "Failed to load chat"}
+
+            try:
+                index = int(message_index)
+            except Exception:
+                return {"success": False, "message": "Invalid message index"}
+
+            if index < 0 or index >= len(messages):
+                return {"success": False, "message": "Invalid message index"}
+
+            target_role = messages[index].get("role")
+            if target_role not in ("assistant", "user"):
+                return {"success": False, "message": "Target must be a user or assistant message"}
+
+            resolved_persona = _resolve_persona_name_for_chat(chat_id, persona_name)
+            history = []
+            user_prompt = ""
+
+            if target_role == "assistant":
+                if index == 0 or messages[index - 1].get("role") != "user":
+                    return {"success": False, "message": "No user prompt found before assistant message"}
+                history = messages[:index]
+                user_prompt = str((messages[index - 1] or {}).get("content", ""))
+            else:
+                if index + 1 < len(messages) and messages[index + 1].get("role") == "assistant":
+                    return {"success": False, "message": "Use regenerate on assistant message when a reply already exists"}
+                history = messages[:index]
+                user_prompt = str((messages[index] or {}).get("content", ""))
+
+            reply, error = self.prompt_pipeline.generate_reply_from_history(
+                bot_name=bot_name,
+                history_messages=history,
+                persona_id=persona_id,
+                persona_name=resolved_persona,
+                latest_user_message=user_prompt
+            )
+            if error or not reply:
+                return {"success": False, "message": f"Failed to regenerate: {error or 'Empty response'}"}
+
+            if target_role == "assistant":
+                result = self.chat_manager.edit_message(chat_id, bot_name, index, reply)
+            else:
+                result = self.chat_manager.insert_message(chat_id, bot_name, index + 1, "assistant", reply)
+            if result is None:
+                return {"success": False, "message": "Failed to save regenerated message"}
+            self.chat_manager.current_chat_id = chat_id
+            self.current_bot_name = bot_name
+            return {"success": True, "messages": result}
+
+        def _on_chat_continue_message(chat_id, bot_name, message_index, persona_id=None, persona_name=None):
+            messages = self.chat_manager.load_chat(chat_id, bot_name)
+            if messages is None:
+                return {"success": False, "message": "Failed to load chat"}
+
+            try:
+                index = int(message_index)
+            except Exception:
+                return {"success": False, "message": "Invalid message index"}
+
+            if index < 0 or index >= len(messages) or messages[index].get("role") != "assistant":
+                return {"success": False, "message": "Target must be an assistant message"}
+
+            resolved_persona = _resolve_persona_name_for_chat(chat_id, persona_name)
+            history = messages[:index + 1]
+            continue_prompt = (
+                "Continue the previous assistant response from exactly where it stopped. "
+                "Return only new continuation text. Do not restate, summarize, or repeat any earlier sentences."
+            )
+            continuation, error = self.prompt_pipeline.generate_reply_from_history(
+                bot_name=bot_name,
+                history_messages=history,
+                persona_id=persona_id,
+                persona_name=resolved_persona,
+                latest_user_message=continue_prompt
+            )
+            if error or not continuation:
+                return {"success": False, "message": f"Failed to continue message: {error or 'Empty response'}"}
+
+            current_text = str((messages[index] or {}).get("content", ""))
+            merged_text = _merge_assistant_continuation(current_text, continuation)
+
+            result = self.chat_manager.edit_message(chat_id, bot_name, index, merged_text)
+            if result is None:
+                return {"success": False, "message": "Failed to save continued message"}
+            self.chat_manager.current_chat_id = chat_id
+            self.current_bot_name = bot_name
+            return {"success": True, "messages": result}
             
         def _on_get_last_chat(bot_name):
             """Get the last chat for a bot, or the last chat from any bot if bot_name is None/empty"""
@@ -368,9 +646,33 @@ class Application:
             if settings_payload:
                 settings.update(settings_payload)
 
-            provider = settings.get("api_provider", "openai")
+            provider = str(settings.get("api_provider", "openai")).strip().lower()
             api_key = settings.get("api_key", "")
             api_base_url = settings.get("api_base_url", "")
+            selected_model = str(settings.get("model", "")).strip()
+
+            if provider == "localmodel":
+                models_root = Path(__file__).parent.parent / "Models" / "ChatModels"
+                if not models_root.exists() or not models_root.is_dir():
+                    return {"success": False, "message": f"Local model folder not found: {models_root}"}
+                if not selected_model:
+                    return {"success": False, "message": "Select a local model file first."}
+
+                model_path = Path(selected_model)
+                if not model_path.is_absolute():
+                    model_path = models_root / selected_model
+                if not model_path.exists() or not model_path.is_file():
+                    return {"success": False, "message": f"Model file not found: {model_path}"}
+
+                try:
+                    from llama_cpp import Llama  # noqa: F401
+                except Exception:
+                    return {
+                        "success": False,
+                        "message": "LocalModel requires llama-cpp-python. Install it in your environment to use direct local model loading."
+                    }
+
+                return {"success": True, "message": f"Local model is available: {model_path.name}"}
 
             if not api_base_url:
                 if provider == "localhost":
@@ -420,10 +722,44 @@ class Application:
             except Exception as exc:  # noqa: BLE001
                 return {"success": False, "message": f"Test failed: {exc}"}
 
+        def _on_settings_list_local_models():
+            models_root = Path(__file__).parent.parent / "Models" / "ChatModels"
+            if not models_root.exists() or not models_root.is_dir():
+                return {
+                    "success": False,
+                    "models": [],
+                    "message": f"Folder not found: {models_root}"
+                }
+
+            allowed_extensions = {
+                ".gguf",
+                ".bin",
+                ".safetensors",
+                ".pt",
+                ".pth"
+            }
+
+            model_items = []
+            for file_path in models_root.rglob("*"):
+                if not file_path.is_file():
+                    continue
+                if file_path.suffix.lower() not in allowed_extensions:
+                    continue
+                relative_path = str(file_path.relative_to(models_root)).replace("\\", "/")
+                model_items.append(relative_path)
+
+            model_items.sort(key=lambda value: value.lower())
+            return {
+                "success": True,
+                "models": model_items,
+                "message": f"Found {len(model_items)} local model file(s)."
+            }
+
         self._gui_server, self._gui_thread, self._gui_url = start_gui_server(
             _on_message, _on_bot_list, _on_bot_select, _on_bot_create, _on_bot_update, _on_bot_delete, _on_bot_iam, _on_bot_images,
-            _on_chat_list, _on_chat_create, _on_chat_delete, _on_chat_switch_iam, _on_get_last_chat, _on_load_chat, _on_settings_get, _on_settings_update, _on_settings_reset,
-            _on_settings_test, _on_personas_list, _on_persona_select, _on_persona_create, _on_persona_update, _on_persona_delete, _on_persona_images
+            _on_chat_list, _on_chat_create, _on_chat_delete, _on_chat_switch_iam, _on_chat_edit_message, _on_chat_delete_message,
+            _on_chat_regenerate_message, _on_chat_continue_message, _on_get_last_chat, _on_load_chat, _on_settings_get, _on_settings_update, _on_settings_reset,
+            _on_settings_test, _on_settings_list_local_models, _on_personas_list, _on_persona_select, _on_persona_create, _on_persona_update, _on_persona_delete, _on_persona_images
         )
         webbrowser.open(self._gui_url)
 

@@ -1,7 +1,7 @@
 {
   "id": "User",
   "name": "User",
-  "description": "A default user persona.",
+  "description": "A default user persona. Human.",
   "cover_art": "/Personas/User/Coverart/User.png",
   "icon_art": "/Personas/User/Coverart/User.png",
   "cover_art_fit": {

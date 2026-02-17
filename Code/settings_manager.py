@@ -24,7 +24,7 @@ class SettingsManager:
             "temperature": 0.7,
             "max_tokens": 10000,
             "max_response_length": 300,
-            "stop_strings": ["User", "User:"],
+            "stop_strings": [],
             "top_k": 40,
             "enable_repeat_penalty": True,
             "repeat_penalty": 1.0,
@@ -84,6 +84,8 @@ class SettingsManager:
                     model = str(self.settings.get("model", "")).strip()
                     if provider == "localhost" and not model:
                         self.settings["model"] = "Localhost"
+                    if provider == "localmodel" and not model:
+                        self.settings["model"] = ""
                     
             print("[SettingsManager] Loaded settings")
             return self.settings

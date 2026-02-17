@@ -1883,13 +1883,27 @@ function startNewChat(botName) {
 			if (botData.success) {
 				currentBotInfo = botData.bot;
 			}
-			const selectedIamSet = chatBotIamSelections[botName] || (currentBotInfo && currentBotInfo.active_iam_set) || DEFAULT_IAM_SET;
-			// Then create the chat
-			return fetch('/api/chats', {
+			return fetch('/api/bot/iam', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ action: 'create', bot_name: botName, title: title, persona_name: (currentPersonaInfo && currentPersonaInfo.name) ? currentPersonaInfo.name : 'User', iam_set: selectedIamSet })
-			});
+				body: JSON.stringify({ action: 'list_sets', bot_name: botName })
+			})
+				.then(r => r.json())
+				.then(iamData => {
+					const defaultIamSet = (typeof DEFAULT_IAM_SET !== 'undefined' && DEFAULT_IAM_SET) ? DEFAULT_IAM_SET : 'IAM_1';
+					const setNames = (typeof getSortedIamSetNames === 'function')
+						? getSortedIamSetNames((iamData && iamData.sets) ? iamData.sets : [defaultIamSet])
+						: ((iamData && iamData.sets) || [defaultIamSet]);
+					const selectedIamSet = setNames && setNames.length ? setNames[0] : defaultIamSet;
+					chatBotIamSelections[botName] = selectedIamSet;
+
+					// Then create the chat
+					return fetch('/api/chats', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ action: 'create', bot_name: botName, title: title, persona_name: (currentPersonaInfo && currentPersonaInfo.name) ? currentPersonaInfo.name : 'User', iam_set: selectedIamSet })
+					});
+				});
 		})
 		.then(r => r.json())
 		.then(chat => {
