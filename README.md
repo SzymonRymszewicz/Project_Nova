@@ -5,9 +5,7 @@
 ![License](https://img.shields.io/badge/License-GPL%20v3-green)
 ![Version](https://img.shields.io/badge/Version-1.0.0-orange)
 
-> **BlueNovaAI** is a local-first AI chat workspace that puts you in full control — define custom bots with personalities, compose rich prompt pipelines, manage conversation history with edit/regenerate/continue actions, and keep everything running on your own machine without any cloud dependency.
-
-BlueNovaAI is a local-first AI chat workspace focused on bots, personas, modular prompt composition, and chat lifecycle tooling (edit, regenerate, continue, variants, datasets, debug logs).
+**BlueNovaAI** is a local-first AI chat workspace that puts you in full control — define custom bots with personalities, compose rich prompt pipelines, manage conversation history with edit/regenerate/continue actions, and keep everything running on your own machine without any cloud dependency.
 
 It runs as a Python desktop-like app with a built-in local web UI server.
 
