@@ -1,0 +1,48 @@
+# Roadmap
+
+This roadmap outlines the current development direction for BlueNovaAI.
+
+---
+
+## Short-Term Goals
+
+### 1) Bug fixing and stability
+- Resolve known UI/backend issues.
+- Improve reliability of chat flow, state handling, and feature interactions.
+- Reduce regressions while iterating on new features.
+
+### 2) UI improvements
+- Polish layout consistency and readability.
+- Improve navigation clarity and editing ergonomics.
+- Continue refining Help and creation workflows for faster iteration.
+
+### 3) TTS implementation
+- Add text-to-speech support for assistant outputs.
+- Make playback practical for local usage.
+- Integrate TTS controls into existing UI without disrupting current chat flow.
+
+---
+
+## Long-Term Goals
+
+### 1) Image generation + interpretation support
+- Add image generation capabilities.
+- Add image understanding/interpretation workflows.
+- Integrate visual input/output into chat and bot tools.
+
+### 2) RAG + file operations support
+- Add Retrieval-Augmented Generation (RAG) features.
+- Support reading, editing, and creating files as part of AI workflows.
+- Build practical document/project-aware AI usage in one interface.
+
+### 3) Custom Tool Creation module / MCP support
+- Enable user-defined tool creation modules.
+- Add MCP-compatible tooling integration.
+- Expand BlueNovaAI into a flexible local AI orchestration platform.
+
+---
+
+## Guiding direction
+
+BlueNovaAI continues toward the same core vision:
+**an all-in-one localhost-optimized AI interface** that is practical, extensible, and production-ready for daily use.

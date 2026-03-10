@@ -2,11 +2,11 @@
 
 import json
 from pathlib import Path
+from gui import WEB_PORT
 
 
 class SettingsManager:
-    def __init__(self, settings_folder="../Settings"):
-        """Initialize the settings manager with the path to the Settings folder"""
+    def __init__(self, settings_folder="../"):
         self.settings_folder = Path(__file__).parent / settings_folder
         self.settings_file = self.settings_folder / "settings.txt"
         self.settings = {}
@@ -16,14 +16,19 @@ class SettingsManager:
             "enable_animations": True,
             "ui_font_size": 14,
             "chat_font_size": 20,
+            "chat_text_color_main": "#d5e2ff",
+            "chat_text_color_italic": "#aeb6cb",
+            "chat_text_color_bold": "#f2f4ff",
+            "chat_text_color_underlined": "#bdeed5",
+            "chat_text_color_quote": "#e39a35",
             "console_width": 980,
             "console_height": 620,
             
             # Generation Settings
-            "max_context_messages": 20,
-            "temperature": 0.7,
+            "max_context_messages": 10,
+            "temperature": 0.8,
             "max_tokens": 10000,
-            "max_response_length": 300,
+            "max_response_length": 400,
             "stop_strings": [],
             "top_k": 40,
             "enable_repeat_penalty": True,
@@ -38,13 +43,17 @@ class SettingsManager:
             "api_key": "",
             "api_base_url": "http://localhost:1234/v1",
             "model": "Localhost",
+            "max_parallel_api_requests": 2,
             
             # Other Settings
             "auto_save_chats": True,
             "default_bot": "Nova",
-            "gui_port": 5067,
-            "auto_load_last_chat": True,
+            "gui_port": WEB_PORT,
+            "auto_load_last_chat": False,
             "show_message_timestamps": True,
+            "enable_text_streaming": True,
+            "enable_controlled_streaming": True,
+            "controlled_streaming_tps": 15,
             "debug_mode": False
         }
         self.load_settings()
@@ -82,10 +91,11 @@ class SettingsManager:
 
                     provider = str(self.settings.get("api_provider", "localhost")).strip().lower()
                     model = str(self.settings.get("model", "")).strip()
+                    if provider == "localmodel":
+                        self.settings["api_provider"] = "localhost"
+                        provider = "localhost"
                     if provider == "localhost" and not model:
                         self.settings["model"] = "Localhost"
-                    if provider == "localmodel" and not model:
-                        self.settings["model"] = ""
                     
             print("[SettingsManager] Loaded settings")
             return self.settings

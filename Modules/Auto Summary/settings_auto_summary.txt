@@ -1,0 +1,27 @@
+# Auto Summary module settings
+# Values are ratios unless stated otherwise. Example: 0.30 = 30%.
+
+# Phase1: light deterministic compression of oldest phase0 IAMs
+phase1_trigger=0.30
+phase1_max_passes=24
+
+# Phase2: grouped deterministic compression of phase1 IAMs
+phase2_trigger=0.90
+phase2_goal=0.50
+phase2_iam_count=5
+phase2_max_passes=24
+
+# Phase3: grouped LLM summarization when phase2 cannot continue
+phase3_trigger=0.90
+phase3_goal=0.50
+phase3_iam_count=3
+phase3_max_passes=8
+
+# Anti-thrashing and runtime behavior
+hysteresis_margin=0.05
+phase_cooldown_turns=0
+keep_lineage=true
+
+# LLM summarization output limits
+llm_max_tokens=220
+llm_max_chars=1000

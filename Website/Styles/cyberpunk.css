@@ -1,0 +1,791 @@
+@import url('/Styles/default.css');
+
+:root{--default-ui-anim-mult:0;}
+
+body{background:#090a0d;color:#f5f7ff;}
+.sidebar,.bot-panel,.chat-header,.input-area{background:#11121a;border-color:#2a2d3a;}
+.sidebar-title,.chat-item-title,.card-title,.detail-info h2,.bot-panel-name{color:#00f0ff;}
+
+.nav-item:hover{background:#171924;border-left-color:#00f0ff;}
+.nav-item.active{background:#171924;border-left-color:#ffd60a;color:#ffd60a;}
+
+.bot-panel-group,.settings-group,.bot-editor-section,.editor-section,.chat-item,.bot-card,.persona-card,.image-card{background:#161823;border-color:#2a2d3a;}
+.bot-card:hover,.persona-card:hover,.chat-item:hover{border-color:#00f0ff;box-shadow:0 0 0.8rem rgba(0,240,255,0.2);}
+
+.message-bubble{background:#181b28;border:1px solid #2a2d3a;}
+.message.user .message-bubble{background:#202336;border:1px solid #3b3f56;}
+.message-avatar{background:#00f0ff;color:#090a0d;}
+.message.user .message-avatar{background:#ff2e93;color:#fff;}
+
+.input-field,.text-input,.setting-input,.setting-select{background:#101320;border-color:#2a2d3a;color:#f5f7ff;}
+.input-field:focus,.text-input:focus,.setting-input:focus,.setting-select:focus{border-color:#00f0ff;box-shadow:0 0 0.5rem rgba(0,240,255,0.25);}
+
+.btn-primary,.action-btn,.send-btn{background:#ffd60a;color:#121212;font-weight:700;}
+.btn-primary:hover,.action-btn:hover,.send-btn:hover{background:#ffe252;}
+.send-btn.stop-mode{background:#ff3b3b;color:#121212;box-shadow:0 0 0.75rem rgba(255,59,59,0.3);}
+.send-btn.stop-mode:hover{background:#ff5a5a;}
+.btn-secondary,.action-btn.cancel-btn{background:#161823;color:#00f0ff;border-color:#2a2d3a;}
+.btn-secondary:hover,.action-btn.cancel-btn:hover{border-color:#00f0ff;}
+.action-btn.delete-btn{background:#3a1222;color:#ff7ab6;border-color:#7a2e4f;}
+.action-btn.delete-btn:hover{background:#4a1830;border-color:#ff7ab6;}
+
+.section-collapsible-title,.settings-group h3,.bot-panel-group h3,.bot-preview-container h3,.bot-controls-container h3,.preview-container h3,.controls-container h3,.editor-section h3{color:#00f0ff;}
+.section-collapsible-toggle{background:#101320;color:#ffd60a;border-color:#2a2d3a;}
+.section-collapsible-toggle:hover{border-color:#ffd60a;box-shadow:0 0 0.5rem rgba(255,214,10,0.3);}
+
+.iam-set-label,.prompt-order-item .prompt-order-index{color:#ffd60a;}
+.prompt-order-item{background:#101320;border-color:#2a2d3a;color:#f5f7ff;}
+
+.slider,.setting-input[type="range"]{background:#0f1120;border-color:#2a2d3a;}
+.slider::-webkit-slider-thumb,.setting-input[type="range"]::-webkit-slider-thumb{background:#00f0ff;}
+.slider::-webkit-slider-thumb:hover,.setting-input[type="range"]::-webkit-slider-thumb:hover{background:#5af7ff;box-shadow:0 0 0.6rem #00f0ff;}
+.slider::-moz-range-thumb,.setting-input[type="range"]::-moz-range-thumb{background:#00f0ff;}
+.slider::-moz-range-thumb:hover,.setting-input[type="range"]::-moz-range-thumb:hover{background:#5af7ff;box-shadow:0 0 0.6rem #00f0ff;}
+
+.chat-last-opened-badge{color:#ffd60a;border-color:#ffd60a;background:rgba(255,214,10,0.14);}
+.api-test-result.success{color:#7dffb3;}
+.api-test-result.failure{color:#ff6e9e;}
+
+.detail-cover,.chat-item-icon,.detail-icon{background:linear-gradient(135deg,#00f0ff 0%,#ff2e93 55%,#ffd60a 100%);}
+
+::-webkit-scrollbar-track{background:#0d0f18;}
+::-webkit-scrollbar-thumb{background:#2a2d3a;}
+::-webkit-scrollbar-thumb:hover{background:#3a3e52;}
+
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;background:repeating-linear-gradient(to bottom,rgba(255,255,255,0.028) 0,rgba(255,255,255,0.028) 1px,transparent 1px,transparent 3px);opacity:0.22;mix-blend-mode:soft-light;}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;background:radial-gradient(circle at 82% 88%,rgba(255,46,147,0.1) 0,transparent 36%);}
+
+.sidebar-title,.chat-title{letter-spacing:0.03em;text-shadow:0 0 0.5rem rgba(0,240,255,0.35);}
+.chat-subtitle{color:#9aa2c4;}
+
+.nav-item{position:relative;}
+.nav-item.active{box-shadow:inset 0 0 1rem rgba(255,214,10,0.16);}
+.nav-item.active::after{content:'';position:absolute;right:0.5rem;top:50%;transform:translateY(-50%);width:0.4rem;height:0.4rem;border-radius:50%;background:#ffd60a;box-shadow:0 0 0.5rem #ffd60a;}
+
+.bot-panel-group,.settings-group,.bot-editor-section,.editor-section,.chat-item,.bot-card,.persona-card,.image-card,.message-bubble,.message.user .message-bubble{position:relative;clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));}
+.bot-panel-group::before,.settings-group::before,.bot-editor-section::before,.editor-section::before{content:'';position:absolute;inset:0;border:1px solid rgba(0,240,255,0.15);pointer-events:none;clip-path:inherit;}
+
+.btn,.action-btn,.send-btn,.section-collapsible-toggle{clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));}
+.btn-primary,.action-btn,.send-btn{box-shadow:0 0 0.75rem rgba(255,214,10,0.26);}
+.btn-secondary,.action-btn.cancel-btn{box-shadow:0 0 0.55rem rgba(0,240,255,0.14);}
+
+.section-collapsible-toggle{font-weight:800;text-shadow:0 0 0.45rem rgba(255,214,10,0.5);}
+
+.input-field,.text-input,.setting-input,.setting-select{clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px));}
+
+.message.user .message-bubble{box-shadow:0 0 0.75rem rgba(255,46,147,0.16);}
+.message:not(.user) .message-bubble{box-shadow:0 0 0.75rem rgba(0,240,255,0.14);}
+
+.chat-last-opened-badge{font-weight:800;box-shadow:0 0 0.5rem rgba(255,214,10,0.2);}
+
+@keyframes cp-flicker{
+	0%,100%{opacity:1;text-shadow:0 0 0.5rem rgba(0,240,255,0.35);}
+	7%{opacity:0.88;text-shadow:0 0 0.65rem rgba(0,240,255,0.52);}
+	8%{opacity:1;}
+	28%{opacity:0.94;}
+	29%{opacity:0.8;}
+	30%{opacity:1;}
+	62%{opacity:0.96;}
+	63%{opacity:0.86;}
+	64%{opacity:1;}
+}
+
+@keyframes cp-pulse{
+	0%,100%{box-shadow:0 0 0 rgba(255,214,10,0.05),inset 0 0 1rem rgba(255,214,10,0.16);}
+	50%{box-shadow:0 0 1rem rgba(255,214,10,0.28),inset 0 0 1.2rem rgba(255,214,10,0.28);}
+}
+
+@keyframes cp-scanline-sweep{
+	0%{transform:translateX(-110%);opacity:0;}
+	20%{opacity:0.8;}
+	70%{opacity:0.3;}
+	100%{transform:translateX(120%);opacity:0;}
+}
+
+@keyframes cp-glitch-jitter{
+	0%,100%{transform:translate(0,0);}
+	20%{transform:translate(-0.5px,0.5px);}
+	40%{transform:translate(0.6px,-0.4px);}
+	60%{transform:translate(-0.4px,-0.4px);}
+	80%{transform:translate(0.5px,0.3px);}
+}
+
+.sidebar-title,.chat-title{animation:cp-flicker 6.5s infinite linear;}
+
+.nav-item.active{animation:cp-pulse 2.8s infinite ease-in-out;}
+
+.btn-primary,.action-btn,.send-btn{position:relative;overflow:hidden;}
+.btn-primary::after,.action-btn::after,.send-btn::after{content:'';position:absolute;top:-20%;left:-10%;width:35%;height:140%;background:linear-gradient(115deg,transparent 0%,rgba(255,255,255,0.18) 45%,rgba(0,240,255,0.24) 55%,transparent 100%);transform:translateX(-120%);pointer-events:none;}
+.btn-primary:hover::after,.action-btn:hover::after,.send-btn:hover::after{animation:cp-scanline-sweep 0.6s ease-out 1;}
+
+.section-collapsible-toggle:hover,.icon-btn:hover{animation:cp-glitch-jitter 0.16s linear 1;}
+
+.message-bubble:hover,.chat-item:hover,.bot-card:hover,.persona-card:hover{animation:cp-glitch-jitter 0.18s linear 1;}
+
+/* Dataset tab: cyberpunk 2077-inspired skin (visual-only, no layout changes) */
+.app.dataset-view .messages{
+	background:
+		radial-gradient(62rem 38rem at 82% -8%,rgba(255,46,147,0.18) 0%,rgba(0,0,0,0) 58%),
+		radial-gradient(64rem 40rem at 18% 14%,rgba(0,240,255,0.18) 0%,rgba(0,0,0,0) 60%),
+		linear-gradient(180deg,#060913 0%,#090c18 52%,#080a16 100%);
+}
+
+.app.dataset-view .dataset-layout{
+	border-color:rgba(0,240,255,0.3);
+	background:linear-gradient(150deg,rgba(12,16,34,0.96) 0%,rgba(16,14,34,0.95) 60%,rgba(18,15,40,0.95) 100%);
+	box-shadow:0 1rem 2rem rgba(0,0,0,0.52),0 0 1.2rem rgba(0,240,255,0.14),inset 0 0 1.2rem rgba(255,46,147,0.08),inset 0 0 0 1px rgba(255,214,10,0.12);
+}
+
+.app.dataset-view .dataset-layout::before{
+	background:repeating-linear-gradient(90deg,rgba(0,240,255,0.08) 0,rgba(0,240,255,0.08) 1px,transparent 1px,transparent 22px),repeating-linear-gradient(0deg,rgba(255,214,10,0.06) 0,rgba(255,214,10,0.06) 1px,transparent 1px,transparent 22px);
+	opacity:0.36;
+}
+
+.app.dataset-view .dataset-layout::after{
+	background:linear-gradient(118deg,rgba(255,214,10,0.1) 0%,rgba(255,46,147,0.08) 42%,rgba(0,0,0,0) 74%),radial-gradient(44rem 16rem at 50% -18%,rgba(0,240,255,0.12) 0%,rgba(0,0,0,0) 65%);
+}
+
+.app.dataset-view .dataset-hero,
+.app.dataset-view .dataset-sidebar,
+.app.dataset-view .dataset-main,
+.app.dataset-view .bot-editor-section.dataset-sidebar,
+.app.dataset-view .bot-editor-section.dataset-main{
+	border-color:rgba(0,240,255,0.34);
+	background:linear-gradient(166deg,rgba(15,20,42,0.96) 0%,rgba(18,16,38,0.95) 58%,rgba(14,18,40,0.96) 100%);
+	box-shadow:inset 0 0 1rem rgba(0,240,255,0.1),0 0 1rem rgba(255,46,147,0.1),inset 0 0 0 1px rgba(255,214,10,0.1);
+}
+
+.app.dataset-view .dataset-hero-title,
+.app.dataset-view .dataset-sidebar h3,
+.app.dataset-view .dataset-main-head h3,
+.app.dataset-view .dataset-entries-header h3{
+	color:#00f0ff;
+	text-shadow:0 0 0.55rem rgba(0,240,255,0.35);
+}
+
+.app.dataset-view .dataset-hero-subtitle,
+.app.dataset-view .dataset-name-inline-label,
+.app.dataset-view .dataset-entry-name-inline-label,
+.app.dataset-view .dataset-list-item-meta{
+	color:#c3cce8;
+}
+
+.app.dataset-view .dataset-list-item,
+.app.dataset-view .dataset-entry-row{
+	border-color:rgba(0,240,255,0.3);
+	background:linear-gradient(134deg,rgba(14,22,48,0.95) 0%,rgba(20,17,42,0.93) 100%);
+	box-shadow:inset 0 0 0.7rem rgba(0,240,255,0.08);
+}
+
+.app.dataset-view .dataset-list-item:hover,
+.app.dataset-view .dataset-entry-row:hover{
+	border-color:rgba(255,214,10,0.74);
+	box-shadow:0 0 0.8rem rgba(255,214,10,0.18),inset 0 0 0.7rem rgba(255,46,147,0.08);
+}
+
+.app.dataset-view .dataset-list-item.active{
+	border-color:rgba(54,247,255,0.5);
+	background:linear-gradient(132deg,rgba(24,31,58,0.97) 0%,rgba(30,23,52,0.95) 100%);
+	box-shadow:inset 0 0 0.8rem rgba(0,240,255,0.1);
+}
+
+.app.dataset-view .dataset-list-item-name,
+.app.dataset-view .dataset-entry-order{
+	color:#ffd60a;
+	text-shadow:0 0 0.35rem rgba(255,214,10,0.26);
+}
+
+.app.dataset-view .dataset-layout .text-input,
+.app.dataset-view .dataset-layout .text-input.dataset-name-inline-input,
+.app.dataset-view .dataset-layout .text-input.dataset-entry-name-input,
+.app.dataset-view .dataset-layout .dataset-entry-mode{
+	background:linear-gradient(145deg,rgba(10,16,34,0.98) 0%,rgba(14,14,34,0.98) 100%);
+	border-color:rgba(0,240,255,0.34);
+	color:#f5f7ff;
+}
+
+.app.dataset-view .dataset-layout .text-input:focus,
+.app.dataset-view .dataset-layout .text-input.dataset-name-inline-input:focus,
+.app.dataset-view .dataset-layout .text-input.dataset-entry-name-input:focus,
+.app.dataset-view .dataset-layout .dataset-entry-mode:focus{
+	border-color:#ffd60a;
+	box-shadow:0 0 0.7rem rgba(255,214,10,0.25);
+}
+
+.app.dataset-view .dataset-layout .action-btn{
+	background:linear-gradient(138deg,#ffd60a 0%,#ffb703 100%);
+	color:#121212;
+	box-shadow:0 0 0.6rem rgba(255,214,10,0.28);
+}
+
+.app.dataset-view .dataset-layout .action-btn:hover{
+	background:linear-gradient(138deg,#ffe252 0%,#ffc530 100%);
+	box-shadow:0 0 0.75rem rgba(255,214,10,0.36);
+}
+
+.app.dataset-view .dataset-layout .dataset-entry-actions .delete-btn,
+.app.dataset-view .dataset-layout .action-btn.dataset-list-delete-btn{
+	border-color:rgba(255,122,182,0.56);
+	background:linear-gradient(150deg,rgba(74,20,47,0.96) 0%,rgba(60,14,39,0.96) 100%);
+	color:#ff9bc7;
+	box-shadow:inset 0 0 0.45rem rgba(255,46,147,0.15);
+}
+
+.app.dataset-view .dataset-layout .dataset-entry-actions .delete-btn:hover,
+.app.dataset-view .dataset-layout .action-btn.dataset-list-delete-btn:hover{
+	border-color:rgba(255,170,210,0.86);
+	background:linear-gradient(150deg,rgba(96,28,60,0.97) 0%,rgba(80,22,52,0.97) 100%);
+	color:#ffd5e7;
+	box-shadow:0 0 0.7rem rgba(255,46,147,0.26),inset 0 0 0.5rem rgba(255,46,147,0.2);
+}
+
+.app.dataset-view .dataset-entry-collapse-btn{
+	border-color:rgba(0,240,255,0.52);
+	background:linear-gradient(145deg,rgba(22,40,86,0.92) 0%,rgba(26,24,70,0.92) 100%);
+	color:#ffd60a;
+	box-shadow:inset 0 0 0.45rem rgba(0,240,255,0.16);
+}
+
+.app.dataset-view .dataset-entry-collapse-btn:hover{
+	border-color:rgba(255,214,10,0.86);
+	color:#fff2b0;
+	background:linear-gradient(145deg,rgba(38,54,102,0.95) 0%,rgba(42,34,86,0.95) 100%);
+	box-shadow:0 0 0.65rem rgba(255,214,10,0.24),inset 0 0 0.5rem rgba(255,46,147,0.16);
+}
+
+.app.dataset-view .dataset-entry-context-title .token-badge.dataset-entry-context-token{
+	border-color:rgba(0,240,255,0.5);
+	color:#9af7ff;
+	background:linear-gradient(145deg,rgba(8,23,52,0.95) 0%,rgba(12,17,46,0.95) 100%);
+	box-shadow:inset 0 0 0.45rem rgba(0,240,255,0.12);
+}
+
+.app.dataset-view .dataset-entry-keywords-helper{color:#b3bddf;}
+.app.dataset-view .dataset-entry-keywords-helper.warning{color:#ffd892;}
+
+.app.dataset-view .dataset-list,
+.app.dataset-view .dataset-entries-list{scrollbar-width:thin;scrollbar-color:#ffd60a rgba(12,18,40,0.9);}
+
+.app.dataset-view .dataset-list::-webkit-scrollbar,
+.app.dataset-view .dataset-entries-list::-webkit-scrollbar{width:0.62rem;height:0.62rem;}
+
+.app.dataset-view .dataset-list::-webkit-scrollbar-track,
+.app.dataset-view .dataset-entries-list::-webkit-scrollbar-track{
+	background:linear-gradient(180deg,rgba(10,15,33,0.9) 0%,rgba(16,13,33,0.9) 100%);
+	border-radius:0.42rem;
+	box-shadow:inset 0 0 0 1px rgba(0,240,255,0.14);
+}
+
+.app.dataset-view .dataset-list::-webkit-scrollbar-thumb,
+.app.dataset-view .dataset-entries-list::-webkit-scrollbar-thumb{
+	background:linear-gradient(180deg,rgba(255,214,10,0.94) 0%,rgba(255,158,25,0.94) 100%);
+	border-radius:0.42rem;
+	border:1px solid rgba(255,225,120,0.44);
+	box-shadow:0 0 0.35rem rgba(255,214,10,0.22);
+}
+
+.app.dataset-view .dataset-list::-webkit-scrollbar-thumb:hover,
+.app.dataset-view .dataset-entries-list::-webkit-scrollbar-thumb:hover{
+	background:linear-gradient(180deg,rgba(255,232,92,0.98) 0%,rgba(255,182,60,0.98) 100%);
+	border-color:rgba(255,244,184,0.64);
+	box-shadow:0 0 0.5rem rgba(255,214,10,0.32);
+}
+
+.app.dataset-view .dataset-list::-webkit-scrollbar-corner,
+.app.dataset-view .dataset-entries-list::-webkit-scrollbar-corner{background:transparent;}
+
+.app.dataset-view{
+	--cp-hud-cyan:#36f7ff;
+	--cp-hud-red:#ffd447;
+	--cp-hud-amber:#ffd447;
+	--cp-hud-bg-0:#070b13;
+	--cp-hud-bg-1:#0a1020;
+	--cp-hud-bg-2:#0d1730;
+	--cp-hud-mag:#ff4fb2;
+}
+
+.app.dataset-view .messages{
+	background:
+		radial-gradient(56rem 28rem at 94% -4%,rgba(255,79,178,0.12) 0%,rgba(0,0,0,0) 58%),
+		radial-gradient(72rem 40rem at 8% 20%,rgba(54,247,255,0.14) 0%,rgba(0,0,0,0) 64%),
+		linear-gradient(180deg,var(--cp-hud-bg-0) 0%,var(--cp-hud-bg-1) 50%,#090e1c 100%);
+}
+
+.app.dataset-view .dataset-layout{
+	border-color:rgba(54,247,255,0.28);
+	background:linear-gradient(155deg,rgba(8,13,24,0.97) 0%,rgba(10,18,35,0.96) 58%,rgba(12,21,40,0.96) 100%);
+	box-shadow:0 1rem 2.2rem rgba(0,0,0,0.55),0 0 1rem rgba(255,84,112,0.2),inset 0 0 1rem rgba(255,212,71,0.1),inset 0 0 0 1px rgba(255,212,71,0.14);
+}
+
+.app.dataset-view .dataset-layout::before{
+	background:
+		repeating-linear-gradient(90deg,rgba(54,247,255,0.06) 0,rgba(54,247,255,0.06) 1px,transparent 1px,transparent 20px),
+		repeating-linear-gradient(0deg,rgba(255,212,71,0.05) 0,rgba(255,212,71,0.05) 1px,transparent 1px,transparent 20px),
+		repeating-linear-gradient(180deg,rgba(255,255,255,0.018) 0,rgba(255,255,255,0.018) 1px,transparent 1px,transparent 3px);
+	opacity:0.42;
+}
+
+.app.dataset-view .dataset-layout::after{
+	background:
+		linear-gradient(108deg,rgba(54,247,255,0.1) 0%,rgba(0,0,0,0) 38%),
+		linear-gradient(286deg,rgba(255,212,71,0.08) 0%,rgba(0,0,0,0) 42%),
+		radial-gradient(34rem 14rem at 50% -18%,rgba(255,212,71,0.08) 0%,rgba(0,0,0,0) 70%);
+	mix-blend-mode:screen;
+}
+
+.app.dataset-view .dataset-hero,
+.app.dataset-view .dataset-sidebar,
+.app.dataset-view .dataset-main,
+.app.dataset-view .bot-editor-section.dataset-sidebar,
+.app.dataset-view .bot-editor-section.dataset-main{
+	border-color:rgba(54,247,255,0.34);
+	background:linear-gradient(168deg,rgba(9,16,32,0.97) 0%,rgba(12,19,38,0.96) 56%,rgba(12,22,42,0.97) 100%);
+	box-shadow:inset 0 0 1rem rgba(54,247,255,0.08),0 0 0.85rem rgba(255,92,122,0.2),inset 0 0 0 1px rgba(255,212,71,0.12);
+}
+
+.app.dataset-view .dataset-hero-title,
+.app.dataset-view .dataset-sidebar h3,
+.app.dataset-view .dataset-main-head h3,
+.app.dataset-view .dataset-entries-header h3{
+	color:var(--cp-hud-red);
+	text-shadow:0 0 0.55rem rgba(255,212,71,0.45);
+	letter-spacing:0.045em;
+	text-transform:uppercase;
+}
+
+.app.dataset-view .dataset-hero-subtitle,
+.app.dataset-view .dataset-name-inline-label,
+.app.dataset-view .dataset-entry-name-inline-label,
+.app.dataset-view .dataset-list-item-meta,
+.app.dataset-view .dataset-entry-keywords-helper{color:#a7b8cf;}
+
+.app.dataset-view .dataset-list-item,
+.app.dataset-view .dataset-entry-row{
+	border-color:rgba(54,247,255,0.3);
+	background:linear-gradient(136deg,rgba(8,18,36,0.96) 0%,rgba(10,20,40,0.95) 58%,rgba(12,18,34,0.95) 100%);
+	box-shadow:inset 0 0 0.8rem rgba(54,247,255,0.08);
+}
+
+.app.dataset-view .dataset-list-item.active{
+	border-color:rgba(54,247,255,0.5);
+	background:linear-gradient(132deg,rgba(13,28,44,0.97) 0%,rgba(10,24,40,0.96) 100%);
+	box-shadow:inset 0 0 0.8rem rgba(54,247,255,0.12);
+}
+
+.app.dataset-view .dataset-list-item-name,
+.app.dataset-view .dataset-entry-order,
+.app.dataset-view .dataset-layout .text-input,
+.app.dataset-view .dataset-layout .dataset-entry-mode,
+.app.dataset-view .dataset-layout .action-btn,
+.app.dataset-view .dataset-entry-context-title,
+.app.dataset-view .dataset-entry-keywords-helper{
+	font-family:"Consolas","Courier New",monospace;
+}
+
+.app.dataset-view .dataset-list-item-name,
+.app.dataset-view .dataset-entry-order{color:var(--cp-hud-red);text-shadow:0 0 0.3rem rgba(255,212,71,0.28);}
+
+.app.dataset-view .dataset-layout .text-input,
+.app.dataset-view .dataset-layout .text-input.dataset-name-inline-input,
+.app.dataset-view .dataset-layout .text-input.dataset-entry-name-input,
+.app.dataset-view .dataset-layout .dataset-entry-mode{
+	background:linear-gradient(145deg,rgba(5,13,28,0.98) 0%,rgba(6,15,30,0.98) 100%);
+	border-color:rgba(54,247,255,0.36);
+	color:#dff7ff;
+}
+
+.app.dataset-view .dataset-layout .text-input:focus,
+.app.dataset-view .dataset-layout .text-input.dataset-name-inline-input:focus,
+.app.dataset-view .dataset-layout .text-input.dataset-entry-name-input:focus,
+.app.dataset-view .dataset-layout .dataset-entry-mode:focus{
+	border-color:var(--cp-hud-red);
+	box-shadow:0 0 0.75rem rgba(255,212,71,0.28);
+}
+
+.app.dataset-view .dataset-layout .action-btn{
+	background:linear-gradient(140deg,#071528 0%,#0a1b30 100%);
+	border:1px solid rgba(54,247,255,0.45);
+	color:var(--cp-hud-cyan);
+	box-shadow:0 0 0.55rem rgba(54,247,255,0.2),inset 0 0 0.45rem rgba(54,247,255,0.09);
+	text-transform:uppercase;
+	letter-spacing:0.03em;
+}
+
+.app.dataset-view .dataset-layout .action-btn:hover{
+	border-color:rgba(255,212,71,0.82);
+	color:#e8ffec;
+	background:linear-gradient(140deg,#0a2138 0%,#0e2a45 100%);
+	box-shadow:0 0 0.72rem rgba(255,212,71,0.28),inset 0 0 0.52rem rgba(255,212,71,0.13);
+}
+
+.app.dataset-view .dataset-layout .dataset-entry-actions .save-btn,
+.app.dataset-view .dataset-layout .action-btn.dataset-entry-inline-add,
+.app.dataset-view .dataset-layout .action-btn.dataset-create-inline-btn{
+	border-color:rgba(255,212,71,0.62);
+	color:var(--cp-hud-red);
+	box-shadow:0 0 0.62rem rgba(255,212,71,0.2),inset 0 0 0.5rem rgba(255,212,71,0.11);
+}
+
+.app.dataset-view .dataset-layout .dataset-entry-actions .delete-btn,
+.app.dataset-view .dataset-layout .action-btn.dataset-list-delete-btn{
+	border-color:rgba(255,79,178,0.66);
+	background:linear-gradient(150deg,rgba(40,10,30,0.96) 0%,rgba(52,10,36,0.96) 100%);
+	color:#ff8ccc;
+	box-shadow:0 0 0.52rem rgba(255,79,178,0.2),inset 0 0 0.45rem rgba(255,79,178,0.12);
+}
+
+.app.dataset-view .dataset-entry-collapse-btn{
+	border-color:rgba(54,247,255,0.56);
+	background:linear-gradient(145deg,rgba(8,25,46,0.94) 0%,rgba(10,20,38,0.94) 100%);
+	color:var(--cp-hud-amber);
+	box-shadow:inset 0 0 0.45rem rgba(54,247,255,0.16);
+}
+
+.app.dataset-view .dataset-entry-collapse-btn:hover{
+	border-color:rgba(255,212,71,0.86);
+	color:#ffedb0;
+	box-shadow:0 0 0.65rem rgba(255,212,71,0.24),inset 0 0 0.5rem rgba(54,247,255,0.14);
+}
+
+.app.dataset-view .dataset-entry-context-title .token-badge.dataset-entry-context-token{
+	border-color:rgba(255,212,71,0.5);
+	color:var(--cp-hud-red);
+	background:linear-gradient(145deg,rgba(5,16,30,0.95) 0%,rgba(8,18,34,0.95) 100%);
+	box-shadow:inset 0 0 0.45rem rgba(255,212,71,0.12);
+}
+
+.app.dataset-view .dataset-entry-keywords-helper.warning{color:#ffd79c;}
+
+.app.dataset-view .dataset-list,
+.app.dataset-view .dataset-entries-list{scrollbar-width:thin;scrollbar-color:var(--cp-hud-red) rgba(8,20,36,0.92);}
+
+.app.dataset-view .dataset-list::-webkit-scrollbar-track,
+.app.dataset-view .dataset-entries-list::-webkit-scrollbar-track{
+	background:linear-gradient(180deg,rgba(7,16,30,0.92) 0%,rgba(8,21,36,0.92) 100%);
+	box-shadow:inset 0 0 0 1px rgba(54,247,255,0.16);
+}
+
+.app.dataset-view .dataset-list::-webkit-scrollbar-thumb,
+.app.dataset-view .dataset-entries-list::-webkit-scrollbar-thumb{
+	background:linear-gradient(180deg,rgba(255,230,120,0.96) 0%,rgba(255,188,52,0.96) 100%);
+	border:1px solid rgba(255,234,170,0.5);
+	box-shadow:0 0 0.45rem rgba(255,212,71,0.3);
+}
+
+.app.dataset-view .dataset-list::-webkit-scrollbar-thumb:hover,
+.app.dataset-view .dataset-entries-list::-webkit-scrollbar-thumb:hover{
+	background:linear-gradient(180deg,rgba(255,242,170,0.98) 0%,rgba(255,210,96,0.98) 100%);
+	border-color:rgba(255,246,208,0.68);
+	box-shadow:0 0 0.62rem rgba(255,212,71,0.38);
+}
+
+.app.dataset-view .dataset-layout .text-input.dataset-name-inline-input,
+.app.dataset-view .dataset-layout .text-input.dataset-entry-name-input{
+	background:transparent;
+	box-shadow:none;
+}
+
+/* Dataset entries: no yellow hover highlight */
+.app.dataset-view .dataset-entry-row:hover{
+	border-color:rgba(54,247,255,0.52);
+	box-shadow:inset 0 0 0.8rem rgba(54,247,255,0.14);
+}
+
+/* Dataset tab: clean background without ambient glow blobs */
+.app.dataset-view .messages{
+	background:linear-gradient(180deg,#070b13 0%,#0a1020 50%,#090e1c 100%) !important;
+}
+
+/* Dataset tab: fully disable decorative glow layers */
+.app.dataset-view .dataset-layout::before,
+.app.dataset-view .dataset-layout::after,
+.app.dataset-view .dataset-sidebar::before,
+.app.dataset-view .dataset-sidebar::after,
+.app.dataset-view .dataset-main::before,
+.app.dataset-view .dataset-main::after{display:none;}
+
+/* Keep depth, remove colored outer halo glow */
+.app.dataset-view .dataset-layout{
+	box-shadow:0 0.9rem 2.1rem rgba(0,0,0,0.58),inset 0 0 1rem rgba(255,212,71,0.1),inset 0 0 0 1px rgba(255,212,71,0.14);
+}
+
+.app.dataset-view .dataset-hero,
+.app.dataset-view .dataset-sidebar,
+.app.dataset-view .dataset-main,
+.app.dataset-view .bot-editor-section.dataset-sidebar,
+.app.dataset-view .bot-editor-section.dataset-main{
+	box-shadow:inset 0 0 1rem rgba(54,247,255,0.08),inset 0 0 0 1px rgba(255,212,71,0.12);
+}
+
+/* Dataset tab: reference-style neon violet pass (visual-only) */
+.app.dataset-view{
+	--cp-ds-bg:#05050b;
+	--cp-ds-bg-soft:#0a0a14;
+	--cp-ds-panel:#0d0d19;
+	--cp-ds-panel-2:#111128;
+	--cp-ds-border:#2a2a4a;
+	--cp-ds-violet:#7c4dff;
+	--cp-ds-violet-soft:#9e7bff;
+	--cp-ds-text:#c7c9e6;
+	--cp-ds-muted:#8c90b5;
+}
+
+.app.dataset-view .messages{
+	background:linear-gradient(180deg,var(--cp-ds-bg) 0%,#070713 52%,#090915 100%) !important;
+}
+
+.app.dataset-view .dataset-layout{
+	border-color:var(--cp-ds-border);
+	background:linear-gradient(160deg,var(--cp-ds-bg-soft) 0%,#0b0b18 58%,#0d0d1b 100%);
+	box-shadow:0 1rem 2.2rem rgba(0,0,0,0.6),inset 0 0 0 1px rgba(124,77,255,0.14);
+}
+
+.app.dataset-view .dataset-hero,
+.app.dataset-view .dataset-sidebar,
+.app.dataset-view .dataset-main,
+.app.dataset-view .bot-editor-section.dataset-sidebar,
+.app.dataset-view .bot-editor-section.dataset-main{
+	border-color:#313156;
+	background:linear-gradient(168deg,var(--cp-ds-panel) 0%,var(--cp-ds-panel-2) 56%,#14142a 100%);
+	box-shadow:inset 0 0 0 1px rgba(124,77,255,0.14);
+}
+
+/* Keep sidebar and editor header baselines perfectly aligned */
+.app.dataset-view .dataset-sidebar-head,
+.app.dataset-view .dataset-main-head{
+	position:relative;
+	align-items:flex-end;
+	min-height:2.08rem;
+	padding-bottom:0.62rem;
+	margin-bottom:0.8rem;
+	border-bottom:1px solid #3a3a64;
+}
+
+.app.dataset-view .dataset-sidebar-head-actions{align-self:flex-end;}
+
+.app.dataset-view .dataset-hero-title,
+.app.dataset-view .dataset-sidebar h3,
+.app.dataset-view .dataset-main-head h3,
+.app.dataset-view .dataset-entries-header h3{
+	color:#ffd447;
+	text-shadow:0 0 0.55rem rgba(255,212,71,0.42);
+}
+
+.app.dataset-view .dataset-hero-subtitle,
+.app.dataset-view .dataset-name-inline-label,
+.app.dataset-view .dataset-entry-name-inline-label,
+.app.dataset-view .dataset-list-item-meta,
+.app.dataset-view .dataset-entry-keywords-helper{
+	color:var(--cp-ds-muted);
+}
+
+.app.dataset-view .dataset-list-item,
+.app.dataset-view .dataset-entry-row{
+	border-color:#34345c;
+	background:linear-gradient(135deg,#0d0d1a 0%,#12122a 65%,#14142f 100%);
+	box-shadow:none;
+}
+
+.app.dataset-view .dataset-list-item:hover,
+.app.dataset-view .dataset-entry-row:hover{
+	border-color:rgba(124,77,255,0.68);
+	box-shadow:inset 0 0 0 1px rgba(158,123,255,0.2);
+}
+
+.app.dataset-view .dataset-list-item.active{
+	border-color:rgba(158,123,255,0.84);
+	background:linear-gradient(135deg,#111124 0%,#171733 65%,#1a1a39 100%);
+	box-shadow:0 0 0.85rem rgba(124,77,255,0.24),inset 0 0 0 1px rgba(158,123,255,0.24);
+}
+
+.app.dataset-view .dataset-list-item-name,
+.app.dataset-view .dataset-entry-order{color:#b9a3ff;text-shadow:0 0 0.3rem rgba(124,77,255,0.3);}
+
+.app.dataset-view .dataset-layout .text-input,
+.app.dataset-view .dataset-layout .dataset-entry-mode{
+	background:linear-gradient(145deg,#090913 0%,#0d0d1b 100%);
+	border-color:#3a3a64;
+	color:var(--cp-ds-text);
+}
+
+.app.dataset-view .dataset-layout .text-input:focus,
+.app.dataset-view .dataset-layout .dataset-entry-mode:focus{
+	border-color:var(--cp-ds-violet-soft);
+	box-shadow:0 0 0.7rem rgba(124,77,255,0.24);
+}
+
+.app.dataset-view .dataset-layout .text-input.dataset-name-inline-input,
+.app.dataset-view .dataset-layout .text-input.dataset-entry-name-input{
+	background:transparent;
+	box-shadow:none;
+}
+
+.app.dataset-view .dataset-layout .action-btn{
+	background:linear-gradient(140deg,#15152d 0%,#1b1b3b 100%);
+	border:1px solid rgba(124,77,255,0.56);
+	color:#d6cbff;
+	box-shadow:inset 0 0 0.45rem rgba(124,77,255,0.15);
+}
+
+.app.dataset-view .dataset-layout .action-btn:hover{
+	background:linear-gradient(140deg,#1a1a36 0%,#23234a 100%);
+	border-color:rgba(158,123,255,0.88);
+	box-shadow:0 0 0.72rem rgba(124,77,255,0.26),inset 0 0 0.52rem rgba(124,77,255,0.2);
+}
+
+.app.dataset-view .dataset-layout .dataset-entry-actions .delete-btn,
+.app.dataset-view .dataset-layout .action-btn.dataset-list-delete-btn{
+	border-color:rgba(255,66,154,0.62);
+	background:linear-gradient(150deg,rgba(56,16,42,0.96) 0%,rgba(68,16,50,0.96) 100%);
+	color:#ffb0d5;
+	box-shadow:inset 0 0 0.45rem rgba(255,66,154,0.16);
+}
+
+.app.dataset-view .dataset-entry-collapse-btn{
+	border-color:rgba(124,77,255,0.6);
+	background:linear-gradient(145deg,#181834 0%,#1e1e3f 100%);
+	color:#cebfff;
+	box-shadow:inset 0 0 0.45rem rgba(124,77,255,0.22);
+}
+
+.app.dataset-view .dataset-entry-collapse-btn:hover{
+	border-color:rgba(158,123,255,0.9);
+	color:#ece5ff;
+	box-shadow:0 0 0.62rem rgba(124,77,255,0.24),inset 0 0 0.5rem rgba(124,77,255,0.26);
+}
+
+.app.dataset-view .dataset-entry-context-title .token-badge.dataset-entry-context-token{
+	border-color:rgba(124,77,255,0.52);
+	color:#c7b8ff;
+	background:linear-gradient(145deg,#0d0d1b 0%,#111126 100%);
+	box-shadow:inset 0 0 0.45rem rgba(124,77,255,0.14);
+}
+
+.app.dataset-view .dataset-list,
+.app.dataset-view .dataset-entries-list{scrollbar-width:thin;scrollbar-color:#7c4dff rgba(10,10,20,0.92);}
+
+.app.dataset-view .dataset-list::-webkit-scrollbar-track,
+.app.dataset-view .dataset-entries-list::-webkit-scrollbar-track{
+	background:linear-gradient(180deg,#0a0a15 0%,#101026 100%);
+	box-shadow:inset 0 0 0 1px rgba(124,77,255,0.2);
+}
+
+.app.dataset-view .dataset-list::-webkit-scrollbar-thumb,
+.app.dataset-view .dataset-entries-list::-webkit-scrollbar-thumb{
+	background:linear-gradient(180deg,rgba(124,77,255,0.94) 0%,rgba(97,58,214,0.94) 100%);
+	border:1px solid rgba(170,145,255,0.44);
+	box-shadow:0 0 0.45rem rgba(124,77,255,0.28);
+}
+
+.app.dataset-view .dataset-list::-webkit-scrollbar-thumb:hover,
+.app.dataset-view .dataset-entries-list::-webkit-scrollbar-thumb:hover{
+	background:linear-gradient(180deg,rgba(154,123,255,0.96) 0%,rgba(118,84,235,0.96) 100%);
+	border-color:rgba(207,190,255,0.6);
+	box-shadow:0 0 0.62rem rgba(124,77,255,0.36);
+}
+
+@keyframes cp-ds-electric-flicker{
+	0%,100%{text-shadow:0 0 0.44rem rgba(255,212,71,0.34),0 0 0 rgba(124,77,255,0.16);}
+	18%{text-shadow:0 0 0.52rem rgba(255,212,71,0.42),0 0 0.24rem rgba(124,77,255,0.2);}
+	38%{text-shadow:0 0 0.7rem rgba(255,212,71,0.56),0 0 0.38rem rgba(124,77,255,0.24);}
+	56%{text-shadow:0 0 0.48rem rgba(255,212,71,0.38),0 0 0.16rem rgba(124,77,255,0.18);}
+	78%{text-shadow:0 0 0.62rem rgba(255,212,71,0.5),0 0 0.3rem rgba(124,77,255,0.22);}
+}
+
+@keyframes cp-ds-electric-flicker-alt{
+	0%,100%{text-shadow:0 0 0.42rem rgba(255,212,71,0.32),0 0 0 rgba(124,77,255,0.14);}
+	11%{text-shadow:0 0 0.66rem rgba(255,212,71,0.54),0 0 0.34rem rgba(124,77,255,0.24);}
+	27%{text-shadow:0 0 0.46rem rgba(255,212,71,0.36),0 0 0.16rem rgba(124,77,255,0.18);}
+	43%{text-shadow:0 0 0.72rem rgba(255,212,71,0.58),0 0 0.38rem rgba(124,77,255,0.24);}
+	69%{text-shadow:0 0 0.5rem rgba(255,212,71,0.4),0 0 0.2rem rgba(124,77,255,0.2);}
+	87%{text-shadow:0 0 0.64rem rgba(255,212,71,0.52),0 0 0.3rem rgba(124,77,255,0.22);}
+}
+
+@keyframes cp-ds-electric-flicker-soft{
+	0%,100%{text-shadow:0 0 0.38rem rgba(255,212,71,0.3),0 0 0 rgba(124,77,255,0.12);}
+	21%{text-shadow:0 0 0.56rem rgba(255,212,71,0.44),0 0 0.24rem rgba(124,77,255,0.2);}
+	47%{text-shadow:0 0 0.48rem rgba(255,212,71,0.38),0 0 0.2rem rgba(124,77,255,0.18);}
+	63%{text-shadow:0 0 0.68rem rgba(255,212,71,0.54),0 0 0.32rem rgba(124,77,255,0.22);}
+	82%{text-shadow:0 0 0.44rem rgba(255,212,71,0.34),0 0 0.14rem rgba(124,77,255,0.16);}
+}
+
+@keyframes cp-ds-line-flicker{
+	0%,100%{opacity:1;filter:brightness(1);}
+	30%{opacity:1;filter:brightness(1.14);}
+	56%{opacity:1;filter:brightness(0.96);}
+	74%{opacity:1;filter:brightness(1.18);}
+}
+
+@keyframes cp-ds-border-pulse{
+	0%,100%{box-shadow:0 0 0.7rem rgba(124,77,255,0.18),inset 0 0 0 1px rgba(158,123,255,0.2);}
+	50%{box-shadow:0 0 0.94rem rgba(124,77,255,0.3),inset 0 0 0 1px rgba(158,123,255,0.3);}
+}
+
+@keyframes cp-ds-scanline{
+	0%{transform:translateX(-125%);opacity:0.34;}
+	14%{opacity:0.34;}
+	46%{opacity:0.34;}
+	70%{opacity:0.34;}
+	100%{transform:translateX(145%);opacity:0.34;}
+}
+
+@keyframes cp-ds-glitch-jitter{
+	0%,100%{transform:translate(0,0);}
+	25%{transform:translate(-0.22px,0.16px);}
+	50%{transform:translate(0.28px,-0.18px);}
+	75%{transform:translate(-0.16px,-0.12px);}
+}
+
+.app.dataset-view .dataset-hero-title{animation:cp-ds-electric-flicker-alt 7.9s cubic-bezier(0.48,0.07,0.2,0.96) infinite;animation-delay:-1.7s;}
+.app.dataset-view .dataset-sidebar h3{animation:cp-ds-electric-flicker 6.7s cubic-bezier(0.44,0.06,0.2,0.95) infinite;animation-delay:-0.9s;}
+.app.dataset-view .dataset-main-head h3{animation:cp-ds-electric-flicker-soft 8.6s cubic-bezier(0.46,0.08,0.2,0.96) infinite;animation-delay:-2.4s;}
+.app.dataset-view .dataset-entries-header h3{animation:cp-ds-electric-flicker-alt 7.25s cubic-bezier(0.5,0.06,0.2,0.95) infinite reverse;animation-delay:-3.1s;}
+
+.app.dataset-view .dataset-list-item.active{animation:cp-ds-border-pulse 3.2s cubic-bezier(0.4,0.08,0.2,0.96) infinite;}
+
+.app.dataset-view .dataset-sidebar-head,
+.app.dataset-view .dataset-main-head{overflow:hidden;}
+
+.app.dataset-view .dataset-sidebar-head::before,
+.app.dataset-view .dataset-main-head::before{
+	content:'';
+	position:absolute;
+	left:0;
+	right:0;
+	bottom:0;
+	height:1px;
+	background:linear-gradient(90deg,rgba(124,77,255,0) 0%,rgba(124,77,255,0.74) 18%,rgba(255,212,71,0.86) 50%,rgba(124,77,255,0.74) 82%,rgba(124,77,255,0) 100%);
+	pointer-events:none;
+	animation:cp-ds-line-flicker 3.8s cubic-bezier(0.4,0.08,0.2,0.95) infinite;
+}
+
+.app.dataset-view .dataset-sidebar-head::after,
+.app.dataset-view .dataset-main-head::after{
+	content:'';
+	position:absolute;
+	top:-20%;
+	left:-18%;
+	width:22%;
+	height:160%;
+	background:linear-gradient(110deg,transparent 0%,rgba(255,212,71,0.28) 48%,rgba(124,77,255,0.22) 56%,transparent 100%);
+	pointer-events:none;
+	display:none;
+}
+
+.app.dataset-view .dataset-layout .action-btn:hover{animation:cp-ds-glitch-jitter 0.22s cubic-bezier(0.4,0.08,0.2,1) 1;}
+
+@media (prefers-reduced-motion: reduce){
+	body::before,body::after{animation:none !important;}
+	.sidebar-title,.chat-title,.nav-item.active,.section-collapsible-toggle:hover,.icon-btn:hover,.message-bubble:hover,.chat-item:hover,.bot-card:hover,.persona-card:hover{animation:none !important;}
+	.app.dataset-view .dataset-hero-title,
+	.app.dataset-view .dataset-sidebar h3,
+	.app.dataset-view .dataset-main-head h3,
+	.app.dataset-view .dataset-entries-header h3,
+	.app.dataset-view .dataset-list-item.active,
+	.app.dataset-view .dataset-layout .action-btn:hover{animation:none !important;}
+	.app.dataset-view .dataset-sidebar-head::after,
+	.app.dataset-view .dataset-sidebar-head::before,
+	.app.dataset-view .dataset-main-head::before,
+	.app.dataset-view .dataset-main-head::after{display:none !important;}
+	.btn-primary::after,.action-btn::after,.send-btn::after{display:none;}
+}

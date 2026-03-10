@@ -1,0 +1,157 @@
+{
+  "datasets": [
+    {
+      "id": "dataset_d397b741b0e6419d8b49224965c6d7c2",
+      "name": "BlueNovaAI",
+      "description": "",
+      "order": 0,
+      "created_at": "2026-03-07T23:59:01.039185Z",
+      "updated_at": "2026-03-10T18:01:23.359037Z",
+      "entries": [
+        {
+          "id": "entry_20543dd95e454140a0cb8a30077a07e7",
+          "name": "What is BlueNovaAI?",
+          "context": "BlueNovaAI is a local-first AI workspace for building, running, and managing AI bots, personas, chats, and memory tools from one interface. The ultimate goal of BlueNovaAI is to become an all-in-one interface for AI that is optimized for localhost. Everything is explained in detail in the Help Me tab.",
+          "collapsed": true,
+          "mode": "dynamic",
+          "keywords": [
+            "ai",
+            "nova",
+            "bluenovaai",
+            "bluenova"
+          ],
+          "prompt_enabled": true,
+          "order": 0,
+          "created_at": "2026-03-08T10:47:23.568082Z",
+          "updated_at": "2026-03-10T12:43:37.970831Z"
+        },
+        {
+          "id": "entry_86922284d9df406c8d419938ecc62430",
+          "name": "Nova",
+          "context": "Nova is the main and build in bot for BlueNovaAI. She exists mostly as an example to how to interact with the interface and is also the default agent for other workflows.",
+          "collapsed": true,
+          "mode": "dynamic",
+          "keywords": [
+            "nova",
+            "bot",
+            "bluenovaai",
+            "bluenova",
+            "ai"
+          ],
+          "prompt_enabled": true,
+          "order": 1,
+          "created_at": "2026-03-10T12:41:02.690563Z",
+          "updated_at": "2026-03-10T18:01:23.359037Z"
+        },
+        {
+          "id": "entry_b741211786a64026818faa7e036fd9fe",
+          "name": "IAM",
+          "context": "IAM, the Immediately Accessible Memory, is a fancy way of categorizing and naming a simple message be it on the bot or user side. It is a collection of the message itself as well as all associated values and context that gets influenced by modules or other external factors. IAMs, as a rule, are always injected into the prompt and are treated as the chat's history.",
+          "collapsed": true,
+          "mode": "dynamic",
+          "keywords": [
+            "iam",
+            "iams"
+          ],
+          "prompt_enabled": true,
+          "order": 2,
+          "created_at": "2026-03-09T10:44:07.914207Z",
+          "updated_at": "2026-03-09T11:11:26.423582Z"
+        },
+        {
+          "id": "entry_be29460291944b1babd6957d97626b1f",
+          "name": "Bots",
+          "context": "In BlueNovaAI the created bots are accessible in the Bots tab. There you can select a bot to chat with or edit. There is also a separate Bot Creation tab that allows you to create or clone a bot.",
+          "collapsed": true,
+          "mode": "dynamic",
+          "keywords": [
+            "bot",
+            "bots",
+            "chatbot",
+            "clanker"
+          ],
+          "prompt_enabled": true,
+          "order": 3,
+          "created_at": "2026-03-09T10:53:15.722136Z",
+          "updated_at": "2026-03-09T11:22:09.673469Z"
+        },
+        {
+          "id": "entry_a50c9d0e8c8a49079c9eb42dc24bdbc2",
+          "name": "Modules",
+          "context": "Modules, in essence, are mod-like extensions to a bot. They most commonly affect the prompt by adding or modifying context but can also extend or change the UI. The modules themselves are more properly explained in the Help Me tab. If the user asks about a specific module or an extension explain that you do not have access to that information and encourage user to check the documentation in the Help Me tab.",
+          "collapsed": true,
+          "mode": "dynamic",
+          "keywords": [
+            "module",
+            "modules",
+            "mod",
+            "modding",
+            "mods",
+            "tool",
+            "tools"
+          ],
+          "prompt_enabled": true,
+          "order": 4,
+          "created_at": "2026-03-09T10:49:38.689903Z",
+          "updated_at": "2026-03-09T11:56:01.584559Z"
+        },
+        {
+          "id": "entry_5a839830344547adbe5b24f2fec05ec7",
+          "name": "Personas",
+          "context": "In Personas tab the user can access and edit their personas. A persona is nothing more than a made up identity the user can use to interact with the bot and is mostly used in roleplay situations. In Persona Creation tab the user can also create a new persona or clone and edit an existing one.",
+          "collapsed": true,
+          "mode": "dynamic",
+          "keywords": [
+            "persona",
+            "personas",
+            "user"
+          ],
+          "prompt_enabled": true,
+          "order": 5,
+          "created_at": "2026-03-09T11:27:14.704631Z",
+          "updated_at": "2026-03-09T12:12:27.512556Z"
+        },
+        {
+          "id": "entry_675bf3f7d38247bfbe66a7ab9add275a",
+          "name": "Datasets",
+          "context": "Datasets can be accessed in the Datasets tab. There the user can create a new dataset or edit an existing one by either creating or modifying entries. Entries are an optional context extensions for the bot. Entries currently support three modes: Static - the entry is always injected into the prompt, Dynamic - the entry is injected dynamically based on the assigned keywords, Inactive - the entry is ignored.\n\nAlso, for a dataset to be active, the user needs to assign it to the bot in the edit view and then enable it in the bot's prompt order.",
+          "collapsed": true,
+          "mode": "dynamic",
+          "keywords": [
+            "data",
+            "datasets",
+            "data set",
+            "dataset",
+            "data sets",
+            "set",
+            "entry",
+            "entries"
+          ],
+          "prompt_enabled": true,
+          "order": 6,
+          "created_at": "2026-03-09T11:34:10.632446Z",
+          "updated_at": "2026-03-09T11:42:32.841399Z"
+        },
+        {
+          "id": "entry_ce8e86a2fab44641b28a83ed52d0fcc9",
+          "name": "Help me",
+          "context": "The Help Me tab is plain old documentation that explains everything that the BlueNovaAI has to offer. From simple generation settings to a guide to how create a proper chat bot. If the user has a question regarding a specific feature encourage him to check the documentation.",
+          "collapsed": true,
+          "mode": "dynamic",
+          "keywords": [
+            "help",
+            "help me",
+            "documentation",
+            "help me tab",
+            "guide",
+            "guidance"
+          ],
+          "prompt_enabled": true,
+          "order": 7,
+          "created_at": "2026-03-09T11:49:46.569081Z",
+          "updated_at": "2026-03-09T16:30:13.335299Z"
+        }
+      ]
+    }
+  ]
+}

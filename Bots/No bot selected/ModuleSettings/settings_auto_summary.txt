@@ -1,0 +1,15 @@
+hysteresis_margin=0.05
+keep_lineage=true
+llm_max_chars=1000
+llm_max_tokens=220
+phase1_max_passes=24
+phase1_trigger=0.30
+phase2_goal=0.50
+phase2_iam_count=5
+phase2_max_passes=24
+phase2_trigger=0.90
+phase3_goal=0.50
+phase3_iam_count=3
+phase3_max_passes=8
+phase3_trigger=0.90
+phase_cooldown_turns=0

@@ -1,0 +1,141 @@
+# Recursive Validator
+
+Recursive Validator is an internal quality gate for assistant replies.
+It iterates candidate generation + scoring and picks the best valid output under strict limits.
+
+---
+
+## How it is enabled
+
+- Prompt Order key: `module::Recursive Validator`
+- If that row is enabled in Prompt Order, validator logic is armed for the active bot/chat.
+
+---
+
+## What it does
+
+- Arms itself before final assistant generation and patches completion/stream requests for the current turn.
+- Generates an initial candidate reply.
+- Scores candidate against enabled criteria (weighted across active criteria).
+- Regenerates with internal validator feedback when needed.
+- Stops on pass condition, threshold condition, max iterations, stagnation, or budget limits.
+- Selects best candidate seen and sanitizes final output before returning.
+
+Pass conditions:
+- all criteria pass, or
+- total score >= `conditional_output_threshold` and hard-fail criteria are not failing.
+
+---
+
+## Runtime storage
+
+Per active chat folder (`Bots/<BotName>/<ChatId>/Validator Temp/`):
+
+- `iter_XX.json`: per-iteration candidate + evaluation artifact.
+
+Lifecycle:
+- folder ensured at validation start,
+- artifacts written during loop,
+- cleanup runs in `finally` (temp files removed after turn completes).
+
+---
+
+## Settings location
+
+Default:
+- `Modules/Recursive Validator/settings_recursive_validator.txt`
+
+Per-bot copy:
+- `Bots/<BotName>/ModuleSettings/settings_recursive_validator.txt`
+
+---
+
+## Settings explained
+
+### Criteria model
+- `criteria_json`
+	- JSON array of criteria objects:
+		- `text`
+		- `enabled`
+		- `hard_fail`
+	- Only enabled criteria are used.
+	- At least one criterion is always enforced.
+
+### Loop controls
+- `max_iterations`
+	- Maximum validation iterations per turn.
+- `conditional_output_threshold`
+	- Score threshold shortcut for acceptance.
+- `hard_pass_score`
+	- Per-criterion pass cutoff used in scoring normalization.
+
+### Budget and latency caps
+- `module_max_latency_ms`
+	- Hard per-turn module time budget.
+- `module_max_token_budget`
+	- Estimated token budget across generation + evaluation loop.
+- `evaluator_reserved_ms`
+	- Time reserved so evaluator phase can still run near deadline.
+- `evaluator_max_tokens`
+	- Max tokens for evaluator response.
+- `candidate_max_tokens`
+	- Optional max tokens for each candidate generation.
+
+### Quality gate tuning
+- `precheck_min_score`
+	- If deterministic precheck is too low, skip expensive evaluator call.
+- `min_improvement_delta`
+	- Minimum score gain required to avoid stagnation stop.
+- `stagnation_stop_enabled`
+	- Enable early stop when improvements flatten out.
+- `min_iterations_before_stagnation`
+	- Earliest iteration where stagnation check can apply.
+- `minimum_candidate_chars`
+	- Penalizes too-short answers.
+
+### Runtime orchestration
+- `pending_context_ttl_ms`
+	- TTL for armed validation context before consumption.
+- `stream_emit_chunk_size`
+	- Chunk size when validator returns streamed final output.
+
+---
+
+## Chat UX and panel controls
+
+Status message while active:
+- `Validating`
+
+Advanced View behavior:
+- `Validation Criteria` editor replaces raw `criteria_json` input.
+- Supports:
+	- add criterion
+	- edit criterion
+	- delete criterion
+	- reorder (up/down)
+	- toggle `enabled`
+	- toggle `hard fail`
+- Polling keeps status in sync during send/regenerate/continue.
+
+---
+
+## Notes and behavior details
+
+- Evaluator output must parse to strict JSON schema; otherwise fallback scoring is used.
+- Validator adds internal candidate-shape guidance and keeps feedback hidden from user-facing output.
+- Quality guards penalize weak patterns (generic filler, meta process narration, too-short output).
+- Final text is sanitized to reduce awkward/incomplete outputs before return.
+- If validator path fails unexpectedly, pipeline degrades safely to direct generation path.
+
+---
+
+## Quick tuning guide
+
+- Want stricter quality:
+	- raise `conditional_output_threshold`, enable/mark critical criteria as `hard_fail`, and increase `max_iterations` slightly.
+- Want faster responses:
+	- lower `max_iterations`, `module_max_latency_ms`, and `evaluator_max_tokens`.
+- Want fewer unnecessary retries:
+	- tune `precheck_min_score` and `min_improvement_delta` to stop low-value loops earlier.
+- If outputs become too short:
+	- raise `minimum_candidate_chars` and/or increase `candidate_max_tokens`.

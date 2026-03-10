@@ -1,0 +1,4 @@
+# ExampleModule Settings
+# Add any module-specific settings here in key=value format
+# Each bot will have an unique version of those settings
+example_setting=default_value

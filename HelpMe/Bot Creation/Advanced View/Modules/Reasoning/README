@@ -1,0 +1,117 @@
+# Reasoning
+
+Reasoning builds a hidden one-turn plan before reply generation.
+It improves response quality while keeping internal planning out of user-visible output.
+
+---
+
+## How it is enabled
+
+- Prompt Order key: `module::Reasoning`
+- If that row is enabled in Prompt Order, the module runs for the active bot/chat.
+
+---
+
+## What it does
+
+- Reads recent effective IAM history (including selected assistant variants).
+- Extracts the latest user message and checks if reasoning should be skipped for trivial turns.
+- Builds a compact internal plan with stable schema:
+	- `intent`
+	- `constraints` (list)
+	- `strategy`
+	- `risks` (list)
+- Tries LLM reasoning first; falls back to deterministic local plan if needed.
+- Injects the reasoning context into the module prompt section for the current turn.
+- Keeps reasoning transient in memory only (short-lived), not persisted in chat files.
+
+---
+
+## Runtime storage
+
+- No module file storage in chat folders.
+- Runtime state is in-memory only (per bot/chat key) and expires quickly.
+
+---
+
+## Settings location
+
+Default:
+- `Modules/Reasoning/settings_reasoning.txt`
+
+Per-bot copy:
+- `Bots/<BotName>/ModuleSettings/settings_reasoning.txt`
+
+---
+
+## Settings explained
+
+### Reasoning questions
+- `reasoning_questions_json`
+	- JSON array of planning questions.
+	- Used by the internal reasoning prompt.
+	- Editable in Advanced View with add/edit/reorder/delete UI.
+
+### Context and budget caps
+- `reasoning_context_max_chars`
+	- Hard max chars for injected reasoning context.
+- `module_max_token_budget`
+	- Max estimated token budget for internal reasoning plan.
+- `module_max_latency_ms`
+	- Max per-turn latency budget for reasoning module execution.
+
+### LLM request limits
+- `llm_max_tokens`
+	- Max completion tokens for reasoning plan generation.
+- `llm_max_retries`
+	- Retry count when reasoning generation fails.
+
+### Trivial-turn skip controls
+- `skip_trivial_enabled`
+	- Enable/disable skip heuristic.
+- `skip_max_chars`
+	- Short-message threshold used by trivial turn detection.
+- `skip_regex`
+	- Regex pattern for fast skip cases (greetings/acknowledgements).
+
+---
+
+## Chat UX and panel controls
+
+Status message while active:
+- `Reasoning`
+
+Advanced View behavior:
+- `Reasoning Questions` editor replaces raw JSON input for `reasoning_questions_json`.
+- Supports:
+	- add question
+	- edit question
+	- delete question
+	- reorder (up/down)
+- Polling keeps status in sync during send/regenerate/continue actions.
+
+---
+
+## Notes and behavior details
+
+- Reasoning has hard internal guardrails:
+	- obey Definition/Core
+	- obey Rules/Scenario
+	- never expose reasoning fields in final reply
+- If no user message exists, module safely skips reasoning for that turn.
+- If turn is trivial (based on settings), module skips to save latency/tokens.
+- If model output is malformed or missing schema, fallback plan is used.
+- Reasoning context is one-turn oriented and intended for internal prompt use only.
+
+---
+
+## Quick tuning guide
+
+- Want deeper planning:
+	- increase `reasoning_context_max_chars` and improve `reasoning_questions_json` quality.
+- Want lower latency:
+	- lower `module_max_latency_ms`, `llm_max_tokens`, and/or raise trivial skip sensitivity.
+- Want stricter privacy of hidden planning:
+	- keep concise questions and avoid asking for user-visible phrasing in reasoning prompts.
+- If reasoning appears too often on short messages:
+	- lower `skip_max_chars` and tighten `skip_regex`.

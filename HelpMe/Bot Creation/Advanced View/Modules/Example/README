@@ -1,0 +1,71 @@
+# Example Module (Simple Guide: Create Your Own Module)
+
+This is the fastest way to learn BlueNovaAI modules.
+Use this page as a starter checklist.
+
+---
+
+## 1) Create module folder
+
+Inside `Modules/`, create a folder for your module name.
+Example:
+- `Modules/My Module/`
+
+---
+
+## 2) Add Python file
+
+Add a module file using your module name pattern.
+Examples:
+- `my_module.py`
+- `my_module_extra.py`
+
+Expose one of these functions:
+- `extend(context)`
+- `process(context)` or `process()`
+
+If both exist, extension logic can call `extend` first.
+
+---
+
+## 3) Add settings defaults (optional)
+
+Create a settings file:
+- `settings_my_module.txt`
+
+Use `key=value` format, one per line.
+Example:
+- `enabled=true`
+- `mode=balanced`
+
+At bot creation, this file is copied into the bot's `ModuleSettings` folder.
+
+---
+
+## 4) Enable module in Prompt Order
+
+Open Bot Creation → Advanced View.
+Find/add your prompt tab key:
+- `module::My Module`
+
+Enable it in Prompt Order so it runs.
+
+---
+
+## 5) Verify quickly
+
+- Save/create bot.
+- Open chat with that bot.
+- Confirm your module behavior appears (prompt effect, logs, or UI asset).
+
+---
+
+## About the built-in Example module
+
+Default settings file:
+- `Modules/Example/settings_example.txt`
+
+Current key:
+- `example_setting=default_value`
+
+Treat it as a safe template for new modules.

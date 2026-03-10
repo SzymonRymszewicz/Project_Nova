@@ -1,0 +1,57 @@
+/* Reasoning module styles */
+
+.reasoning-status-banner {
+	margin-bottom: 10px;
+	padding: 8px 10px;
+	border: 1px solid rgba(120, 140, 180, 0.35);
+	border-radius: 8px;
+	background: rgba(18, 23, 34, 0.75);
+	font-size: 12px;
+	color: #cfe3ff;
+}
+
+.reasoning-questions-editor {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-top: 6px;
+}
+
+.reasoning-questions-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.reasoning-question-row {
+	border: 1px solid rgba(120, 140, 180, 0.35);
+	border-radius: 8px;
+	padding: 8px;
+	background: rgba(14, 18, 26, 0.68);
+}
+
+.reasoning-question-text {
+	font-size: 12px;
+	line-height: 1.35;
+	color: #d8e7ff;
+	margin-bottom: 8px;
+}
+
+.reasoning-question-actions {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.reasoning-q-btn {
+	padding: 4px 8px;
+	font-size: 11px;
+}
+
+.reasoning-questions-empty {
+	font-size: 12px;
+	padding: 8px;
+	color: #a9b2c1;
+	border: 1px dashed rgba(120, 140, 180, 0.35);
+	border-radius: 8px;
+}

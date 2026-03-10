@@ -1,0 +1,14 @@
+ambiguity_neutral_threshold=0.70
+context_max_chars=900
+context_max_lines=10
+edge_cap=12
+edge_decay_per_turn=0.06
+entity_cap=8
+llm_max_retries=1
+llm_max_tokens=220
+messages_history_limit=14
+module_max_latency_ms=2600
+module_max_token_budget=260
+question_relationship_update=Infer relationship changes and emotional subtext from the latest exchange.
+question_tone_flags=Score sarcasm, irony, playful, and hostile tone with confidence in range 0..1.
+tone_decay_per_turn=0.08

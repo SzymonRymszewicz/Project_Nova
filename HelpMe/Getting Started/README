@@ -1,0 +1,86 @@
+# Getting Started
+
+- `Localhost`
+- `OpenAI`
+
+---
+
+## Before You Start
+
+1. Launch BlueNovaAI.
+2. Open **Settings**.
+3. Go to the **API Client** section.
+
+### Standard Setup Flow
+1. Select **API Provider**.
+2. Fill required fields (`API Base URL`, `Model`, `API Key`) for that provider.
+3. Click **Test Connection**.
+4. Click **Save Settings**.
+
+> Tip: always test first, then save.
+
+---
+
+## Provider: Localhost
+
+Use this when you run a local OpenAI-compatible server (for example LM Studio server mode).
+
+### Recommended Values
+- **API Provider:** `Localhost`
+- **API Base URL:** `http://localhost:1234/v1`
+- **Model:** `Localhost` (or exact model id exposed by your local server)
+- **API Key:** optional (only if your local endpoint requires one)
+
+### Steps
+1. Start your local API server.
+2. Set provider to **Localhost**.
+3. Verify the base URL and port.
+4. Click **Test Connection**.
+5. Click **Save Settings**.
+
+### If It Fails
+- Confirm the server is running.
+- Confirm URL and port are correct.
+- Confirm your endpoint is OpenAI-compatible (`/v1`).
+
+---
+
+## Provider: OpenAI
+
+Use this for OpenAI-hosted models.
+
+### Recommended Values
+- **API Provider:** `OpenAI`
+- **API Base URL:** `https://api.openai.com/v1`
+- **Model:** valid model id on your account
+- **API Key:** required
+
+### Steps
+1. Set provider to **OpenAI**.
+2. Paste your API key.
+3. Enter model id.
+4. Click **Test Connection**.
+5. Click **Save Settings**.
+
+### If It Fails
+- Verify API key is valid and has access.
+- Verify model id exists for your account.
+- Check network/firewall/proxy.
+
+---
+
+## Final Verification
+
+1. Open **Main Page**.
+2. Start a quick chat with Nova.
+3. Send: `Hello. How are you?`
+4. If reply succeeds, setup is complete.
+
+---
+
+## Quick Troubleshooting Checklist
+
+- Did you click **Save Settings** after testing?
+- Is the selected provider the intended one?
+- Is `Model` valid for that provider?
+- If streaming feels broken, temporarily disable controlled streaming.

@@ -1,0 +1,45 @@
+# Context Tracker Module
+
+Purpose: adds a live context-usage tracker in the chat UI header.
+
+This module is UI-focused and helps you monitor token budget while chatting.
+It reads current bot/chat state and displays usage bars + breakdown.
+
+---
+
+## How it is enabled
+
+- It appears as a prompt tab key: `module::Context Tracker`.
+- If that row is enabled in Prompt Order, tracker behavior is active for the bot.
+
+---
+
+## What it tracks
+
+The tracker estimates or reads token usage for areas like:
+- Definition (`core`)
+- Rules (`scenario`)
+- Persona
+- Example messages
+- IAM/messages
+- Static Entries (active dataset static mode)
+- Dynamic Entries (active dataset dynamic mode with persistence)
+
+It also compares against max token limit from current generation settings.
+
+---
+
+## Settings
+
+Context Tracker currently has **no dedicated `settings_*.txt` defaults** in this project.
+Configuration is primarily driven by:
+- prompt-order enabled state,
+- active chat/bot context,
+- global generation settings (max tokens).
+
+---
+
+## Notes
+
+- Module includes frontend assets (`context_tracker.js`, `context_tracker.css`).
+- Useful for prompt debugging and context pressure awareness.

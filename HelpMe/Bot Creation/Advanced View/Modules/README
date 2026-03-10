@@ -1,0 +1,35 @@
+# Modules (Extension System)
+
+Modules are bot add-ons (like mods). They can:
+- inject extra prompt instructions,
+- run module code during pipeline execution,
+- add optional UI behavior,
+- keep per-bot settings.
+
+---
+
+## How it works
+
+BlueNovaAI scans `Modules/` and treats each folder as one module.
+When available, it loads module files and calls:
+- `extend(context)` (preferred), or
+- `process(context)` / `process()`.
+
+Modules are connected to Prompt Order with keys like:
+- `module::<Module Name>`
+
+If the module row is enabled in Prompt Order, the module is active for prompt/runtime behavior.
+
+---
+
+## Settings flow
+
+Each module can have a default `settings_*.txt` file.
+During bot creation, defaults are copied into:
+- `Bots/<BotName>/ModuleSettings/`
+
+That means each bot gets its own module settings copy.
+
+---
+
+*Note: Most modules work well but are still a WIP, expect some bugs or undesired behaviour.*

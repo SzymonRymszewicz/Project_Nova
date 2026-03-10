@@ -1,0 +1,70 @@
+# Bot Creation (Simple View)
+
+Where to open: **Bot Creation**
+
+Simple View is the default editor for making a bot quickly.
+It includes the core identity and media setup, without advanced prompt pipeline controls.
+
+---
+
+## What Simple View is for
+
+Use Simple View when you want to:
+- create a new bot fast,
+- define personality and rules,
+- set IAM starter messages,
+- upload cover/icon/images.
+
+You can switch to Advanced View later without losing your draft.
+
+---
+
+## Fields in Simple View
+
+### Name
+- Bot folder/config name base.
+- Avoid special characters if possible (unsafe characters are sanitized on save).
+
+### Description
+- Short human-facing summary shown in bot lists/cards.
+
+### Definition (`core.txt`)
+- Main personality/instructions for the bot.
+- This is one of the most important prompt blocks.
+
+### Rules (`scenario.txt`)
+- Behavioral boundaries, world logic, constraints.
+- Keep stable rules here instead of repeating them in chat.
+
+### Initial Messages (IAM)
+- Preloaded conversation memory blocks.
+- Supports multiple IAM sets (`IAM_1`, `IAM_2`, ...), with next/previous/create/delete controls.
+- Good for reusable startup context.
+
+*Quick note: IAM(Immediately Accessible Memory) is my fancy way of naming a singular chat message.*
+
+### Cover Art / Icon / Images
+- Upload and tune fit (zoom and XY position) for cover and icon.
+- Add additional gallery images for the bot.
+
+---
+
+## Draft and save behavior
+
+- The editor stores a working draft while you edit.
+- When creating the bot, BlueNovaAI builds a bot folder with:
+  - `config.json`
+  - `core.txt`
+  - `scenario.txt`
+  - `IAM/`, `IAMs/`, `Images/`, `Coverart/`
+  - `ModuleSettings/` initialized from each module's default settings file.
+
+---
+
+## When to use Advanced View
+
+Open Advanced View if you need to:
+- control **Prompt Order**,
+- enable/disable prompt tabs per block,
+- edit **Example Messages** and **Example Injection Threshold**,
+- edit module-specific settings for this bot.

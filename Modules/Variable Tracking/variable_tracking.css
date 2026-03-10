@@ -1,0 +1,123 @@
+/* Variable Tracking module styles */
+
+.bot-panel-variables-group .variable-tracker-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	margin-bottom: 8px;
+}
+
+.bot-panel-variables-group:not(.section-collapsed) .section-collapsible-body {
+	max-height: none !important;
+	opacity: 1 !important;
+	transform: translateY(0) !important;
+	overflow: visible !important;
+}
+
+.bot-panel-variables-group.section-collapsed .section-collapsible-body {
+	max-height: 0 !important;
+	opacity: 0 !important;
+	transform: translateY(-4px) !important;
+	overflow: hidden !important;
+}
+
+.bot-panel-variables-group .variable-tracker-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 12px;
+	color: #d2d7e0;
+}
+
+.bot-panel-variables-group .variable-tracker-status {
+	font-size: 11px;
+	color: #9aa3b2;
+	margin-bottom: 8px;
+}
+
+.bot-panel-variables-group .variable-tracker-editor {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.bot-panel-variables-group .variable-tracker-editor .setting-input,
+.bot-panel-variables-group .variable-tracker-editor .btn {
+	min-width: 0;
+	width: 100%;
+}
+
+.bot-panel-variables-group .variable-tracker-editor > .setting-input {
+	height: 34px;
+	padding: 6px 8px;
+	font-size: 12px;
+}
+
+.bot-panel-variables-group .variable-tracker-editor .btn {
+	height: 34px;
+	font-size: 12px;
+	padding: 0 10px;
+}
+
+.bot-panel-variables-group .variable-tracker-list {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	max-height: 240px;
+	overflow: auto;
+	padding-right: 4px;
+}
+
+.bot-panel-variables-group .variable-row {
+	padding: 8px;
+	border: 1px solid rgba(120, 140, 180, 0.35);
+	border-radius: 8px;
+	background: rgba(14, 18, 26, 0.68);
+}
+
+.bot-panel-variables-group .variable-row-actions {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 6px;
+	margin-top: 6px;
+}
+
+.bot-panel-variables-group .variable-row-actions .btn {
+	padding: 6px 8px;
+	font-size: 11px;
+}
+
+.bot-panel-variables-group .variable-name {
+	font-size: 12px;
+	font-weight: 700;
+	color: #edf2ff;
+	margin-bottom: 2px;
+}
+
+.bot-panel-variables-group .variable-value {
+	font-size: 13px;
+	color: #7be1ff;
+	margin-bottom: 2px;
+}
+
+.bot-panel-variables-group .variable-meta {
+	font-size: 10px;
+	color: #9ca7ba;
+}
+
+.bot-panel-variables-group .variable-tracker-empty {
+	padding: 10px;
+	font-size: 12px;
+	color: #a9b2c1;
+	text-align: center;
+	border: 1px dashed rgba(120, 140, 180, 0.4);
+	border-radius: 8px;
+}
+
+@media (max-width: 1400px) {
+	.bot-panel-variables-group .variable-row-actions {
+		grid-template-columns: 1fr;
+	}
+}

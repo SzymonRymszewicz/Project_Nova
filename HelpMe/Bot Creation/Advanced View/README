@@ -1,0 +1,75 @@
+# Advanced View
+
+Where to open: **Bot Creation → gear icon (Advanced settings)**
+
+Advanced View exposes prompt pipeline controls that are hidden in Simple View.
+Use it when you need precise control over what context is injected and in what order.
+
+---
+
+## What Advanced View adds
+
+In addition to Simple View fields, Advanced View includes:
+- **Example Messages**,
+- **Example Injection Threshold**,
+- **Tabs** picker,
+- **Prompt Order** editor,
+- per-module settings panels.
+
+---
+
+## Prompt Order (most important)
+
+Prompt Order defines the sequence of prompt blocks sent into generation.
+Every row is a tab/section key (for example `core`, `scenario`, `module::Auto Summary`, `iam`, `user_input`).
+
+### What you can do
+- **Reorder** rows with drag and drop.
+- **Enable/disable** each row with its toggle.
+- **Remove** optional rows.
+- **Add back rows** from the Tabs picker.
+
+### Why order matters
+Earlier blocks influence interpretation of later blocks.
+A practical default is:
+1. `scenario`
+2. `core`
+3. `user_persona`
+4. module rows (`module::...`)
+5. `example_messages`
+6. `iam`
+7. `user_input`
+
+If outputs feel off, Prompt Order is usually the first place to inspect.
+
+---
+
+## Tabs picker
+
+Tabs lists available prompt sections not currently in Prompt Order.
+Click a tab to reinsert it.
+
+This is useful when you removed a row and want it back without resetting the whole layout.
+
+---
+
+## Example Messages + Injection Threshold
+
+### Example Messages
+- Few-shot examples that guide style/format.
+- They can strongly steer behavior if short and consistent.
+
+### Example Injection Threshold
+- `0` = always inject examples.
+- `> 0` = inject only for first **X user messages**.
+
+Use threshold to avoid examples dominating long chats.
+
+---
+
+## Module settings in Advanced View
+
+Each discovered module gets its own settings panel.
+Settings are copied into the bot's `ModuleSettings` folder on bot creation and saved per bot.
+
+You can also use **Restore [Module] to defaults** to reset one module panel.

@@ -1,0 +1,54 @@
+/* Recursive Validator module styles */
+
+.recursive-validator-criteria-editor {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-top: 6px;
+}
+
+.recursive-validator-criteria-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.recursive-validator-criterion-row {
+	border: 1px solid rgba(120, 140, 180, 0.35);
+	border-radius: 8px;
+	padding: 8px;
+	background: rgba(14, 18, 26, 0.68);
+}
+
+.recursive-validator-criterion-text {
+	font-size: 12px;
+	line-height: 1.35;
+	color: #d8e7ff;
+	margin-bottom: 8px;
+}
+
+.recursive-validator-criterion-flags {
+	display: flex;
+	gap: 12px;
+	flex-wrap: wrap;
+	margin-bottom: 8px;
+	font-size: 11px;
+	color: #a9b2c1;
+}
+
+.recursive-validator-criterion-flags label {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.recursive-validator-criterion-actions {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.recursive-validator-btn {
+	padding: 4px 8px;
+	font-size: 11px;
+}

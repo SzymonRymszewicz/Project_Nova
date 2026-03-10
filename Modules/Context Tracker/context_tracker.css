@@ -1,0 +1,191 @@
+/* Context Tracker module styles */
+
+.context-tracker {
+	position: absolute;
+	top: 12px;
+	right: 16px;
+	z-index: 100;
+	font-family: 'Courier New', Courier, monospace;
+	font-size: 13px;
+	user-select: none;
+}
+
+.context-tracker-main {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	background: rgba(0, 0, 0, 0.6);
+	padding: 6px 12px;
+	border-radius: 6px;
+	color: #e0e0e0;
+	backdrop-filter: blur(4px);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	cursor: help;
+	transition: all 0.2s ease;
+}
+
+.context-tracker-main:hover {
+	background: rgba(0, 0, 0, 0.8);
+	border-color: rgba(0, 180, 255, 0.5);
+	box-shadow: 0 2px 8px rgba(0, 180, 255, 0.2);
+}
+
+.context-tracker-label {
+	font-weight: 600;
+	color: #00b4ff;
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.context-tracker-numbers {
+	color: #ffffff;
+	font-weight: 500;
+	min-width: 100px;
+	text-align: center;
+}
+
+.context-tracker-progress {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.context-progress-bg {
+	width: 140px;
+	height: 18px;
+	background: rgba(0, 0, 0, 0.4);
+	border-radius: 9px;
+	overflow: hidden;
+	border: 1px solid rgba(255, 255, 255, 0.15);
+	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.context-progress-fill {
+	height: 100%;
+	border-radius: 9px;
+	transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
+	box-shadow: 0 0 8px currentColor;
+	position: relative;
+	overflow: hidden;
+}
+
+.context-progress-fill::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+	animation: context-shimmer 2s infinite;
+}
+
+@keyframes context-shimmer {
+	0% { transform: translateX(-100%); }
+	100% { transform: translateX(100%); }
+}
+
+.context-progress-text {
+	font-size: 12px;
+	font-weight: 700;
+	color: #ffffff;
+	min-width: 45px;
+	text-align: right;
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.context-tracker-tooltip {
+	position: absolute;
+	top: calc(100% + 8px);
+	right: 0;
+	left: 0;
+	background: rgba(20, 20, 30, 0.98);
+	border: 1px solid rgba(0, 180, 255, 0.4);
+	border-radius: 8px;
+	padding: 12px;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+	opacity: 0;
+	visibility: hidden;
+	transform: translateY(-8px);
+	transition: all 0.2s ease;
+	pointer-events: none;
+	z-index: 1000;
+	backdrop-filter: blur(8px);
+}
+
+.context-tracker:hover .context-tracker-tooltip {
+	opacity: 1;
+	visibility: visible;
+	transform: translateY(0);
+}
+
+.context-tooltip-title {
+	font-size: 16px;
+	font-weight: 700;
+	color: #00b4ff;
+	margin-bottom: 12px;
+	padding-bottom: 8px;
+	border-bottom: 2px solid rgba(0, 180, 255, 0.3);
+	text-align: center;
+	letter-spacing: 0.5px;
+}
+
+.context-tooltip-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 6px 8px;
+	margin: 2px 0;
+	border-radius: 4px;
+	transition: background 0.15s ease;
+}
+
+.context-tooltip-item:hover {
+	background: rgba(0, 180, 255, 0.1);
+}
+
+.context-tooltip-label {
+	color: #b0b0b0;
+	font-size: 14px;
+	font-weight: 500;
+}
+
+.context-tooltip-value {
+	color: #ffffff;
+	font-weight: 600;
+	font-size: 15px;
+	min-width: 70px;
+	text-align: right;
+}
+
+.context-tooltip-percent {
+	color: #888888;
+	font-weight: 400;
+	font-size: 13px;
+	margin-left: 4px;
+}
+
+.context-tooltip-divider {
+	height: 1px;
+	background: linear-gradient(to right, transparent, rgba(0, 180, 255, 0.3), transparent);
+	margin: 10px 0;
+}
+
+.context-tooltip-total {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 8px;
+	margin-top: 4px;
+	border-radius: 4px;
+	background: rgba(0, 180, 255, 0.1);
+	border: 1px solid rgba(0, 180, 255, 0.3);
+}
+
+.context-tooltip-total .context-tooltip-label,
+.context-tooltip-total .context-tooltip-value {
+	color: #00ff88;
+	font-weight: 700;
+}

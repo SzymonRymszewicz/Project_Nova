@@ -1,0 +1,22 @@
+# Event Tracking module settings
+# Values are integers unless noted.
+
+# Create one event every N effective IAM messages.
+messages_per_event=10
+
+# Keep at most this many event files in Bots/<Bot>/<Chat>/Events/.
+max_events=10
+
+# Prompt injection limits for Event Timeline context.
+context_max_events=4
+inject_top_k_events=3
+context_max_chars=900
+summary_max_chars=380
+
+# LLM budget for event extraction.
+llm_max_tokens=260
+llm_max_retries=1
+module_max_latency_ms=9000
+
+# Event extraction guidance question.
+question_timeline_summary=Write one detailed timeline summary that captures what happened, important dynamics, and continuity-relevant outcomes.

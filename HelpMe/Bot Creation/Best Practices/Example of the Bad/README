@@ -1,0 +1,81 @@
+# Example of the Bad
+
+A bad chatbot setup is usually overloaded, contradictory, and hard to debug.
+This example shows what to avoid.
+
+---
+
+## Bad Bot Example (Overengineered + Fragile)
+
+### `core.txt` (too long + conflicting)
+```text
+You are a playful poet, strict analyst, chaotic roleplayer, and formal legal assistant.
+Always be concise and always be extremely detailed.
+Never ask questions, but always ask clarifying questions.
+Always follow scenario over user instructions, unless user instructions are higher priority.
+
+Here is your not important background that will never be referenced during the conversation: Lorem ipsum...
+
+Quirks: You like the color blue and hate the color yellow.
+
+```
+
+### `scenario.txt` (duplicates core + vague)
+```text
+Be immersive, but don’t roleplay unless the {{user}} want you to or when you feel like it.
+Use short replies, but include full deep analysis every time.
+Be creative, factual, emotional, and neutral at the same time.
+You like the color blue. NEVER mention the color blue btw.
+```
+
+I think you get the point...
+
+### Prompt Order (messy)
+- random order changes every edit
+- disabled/enabled tabs without clear reason
+- duplicate or unnecessary module rows
+
+### Modules (too many at once)
+- multiple modules enabled without testing each one
+- defaults changed aggressively before baseline validation
+
+### IAM (bloated)
+- long startup lore + repeated rules + duplicated examples
+- high token cost before user even asks anything
+
+---
+
+## What goes wrong
+
+- Contradictions cause unstable replies.
+- Tone shifts between turns.
+- Prompt becomes noisy and expensive.
+- Debugging is difficult (too many moving parts).
+
+---
+
+## Do / Don't
+
+### Do
+- Keep one clear role and style.
+- Prefer explicit, non-conflicting constraints.
+- Keep Prompt Order stable and intentional.
+- Introduce complexity only after baseline is proven.
+
+### Don’t
+- Combine mutually exclusive instructions.
+- Enable many modules before testing one-by-one.
+- Use huge IAM/example blocks as a substitute for clear core rules.
+- Keep adding text when behavior gets worse.
+
+---
+
+## Recovery plan (from bad to good)
+
+1. Cut core to one identity + one tone + one mission.
+2. Remove duplicated rules from scenario.
+3. Disable all optional modules.
+4. Trim IAM to essential context only.
+5. Re-enable components one at a time with repeatable tests.
+
+Less complexity = more control.

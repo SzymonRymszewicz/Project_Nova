@@ -1,0 +1,12 @@
+candidate_max_tokens=0
+conditional_output_threshold=75
+criteria_json=[{"text":"Addresses the user's latest request directly.","enabled":true,"hard_fail":true},{"text":"Stays consistent with bot core definition and scenario rules.","enabled":true,"hard_fail":true},{"text":"Is clear, coherent, and useful for the current turn.","enabled":true,"hard_fail":false}]
+evaluator_max_tokens=260
+hard_pass_score=70
+max_iterations=3
+min_improvement_delta=1.5
+module_max_latency_ms=9000
+module_max_token_budget=520
+pending_context_ttl_ms=25000
+stagnation_stop_enabled=true
+stream_emit_chunk_size=28

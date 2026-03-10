@@ -1,0 +1,81 @@
+# How to configure a dataset
+
+Where to open: **Dataset** tab.
+
+---
+
+## 1) Entry naming
+
+Use names that describe purpose, for example:
+- `World Rules`
+- `Character Voice`
+- `Project Facts`
+
+Avoid vague names like `Info 1`.
+
+---
+
+## 2) Context writing rules
+
+Good context is:
+- specific,
+- short enough to stay efficient,
+- stable (avoid rapidly changing details),
+- non-contradictory with bot core/scenario.
+
+Prefer bullet-like, factual text over long prose when possible.
+
+---
+
+## 3) Static vs Dynamic design
+
+Use **static** for:
+- always-required behavior,
+- critical constraints,
+- permanent lore/facts.
+
+Use **dynamic** for:
+- topic-based knowledge,
+- optional situational instructions,
+- context that should appear only on relevant turns.
+
+---
+
+## 4) Dynamic keyword setup
+
+For dynamic entries:
+- Use lowercase keywords where possible.
+- Prefer specific words/phrases over generic terms.
+- Avoid too many broad keywords (prevents accidental triggers).
+- Keep a focused set per entry.
+
+---
+
+## 5) Persistence tuning
+
+Bot setting: **Injection persistance**
+- `0` = dynamic entry only on direct keyword match.
+- `N > 0` = stays injected for next N user turns after trigger.
+- Triggering again resets the timer.
+
+Recommended start: `6`.
+
+---
+
+## 6) Performance and quality tips
+
+- Keep only needed static entries active.
+- Split large context into multiple entries.
+- Disable entries (`inactive`) instead of deleting during testing.
+- Test with the same prompt after each change.
+
+---
+
+## 7) Troubleshooting
+
+If entry is not appearing:
+1. Confirm bot has this dataset selected.
+2. Confirm entry mode is not `inactive`.
+3. For dynamic: verify keyword appears in user turn.
+4. Check persistence value if expecting carry-over turns.
+5. Save bot settings after changes.

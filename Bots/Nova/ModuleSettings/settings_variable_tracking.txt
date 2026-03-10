@@ -1,0 +1,4 @@
+auto_tracking_enabled=true
+context_max_chars=420
+context_max_items=12
+track_assistant_messages=false

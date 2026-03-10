@@ -1,21 +1,47 @@
 {
-  "description": "The helpful AI assistant and companion.",
-  "cover_art": "/Bots/Nova/Coverart/Nova.png",
+  "description": "The helpful AI assistant.",
   "cover_art_fit": {
-    "size": 110,
-    "x": 40,
-    "y": 100
+    "size": 100,
+    "x": 50,
+    "y": 20
   },
   "icon_fit": {
     "size": 100,
     "x": 50,
-    "y": 35
+    "y": 20
   },
+  "active_iam_set": "IAM_1",
+  "cover_art": "/Bots/Nova/Coverart/Nova_full_shot.png",
+  "icon_art": "/Bots/Nova/Images/Nova_selfie.png",
   "prompt_order": [
     "core",
+    "dataset",
     "scenario",
     "user_persona",
-    "iam"
+    "module::Auto Summary",
+    "module::Context Tracker",
+    "iam",
+    "user_input"
   ],
-  "active_iam_set": "IAM_3"
+  "prompt_order_enabled": {
+    "scenario": true,
+    "core": true,
+    "user_persona": true,
+    "module::Auto Summary": true,
+    "module::Context Tracker": true,
+    "module::Empathy": true,
+    "module::Event Tracking": true,
+    "module::Example": true,
+    "module::Reasoning": true,
+    "module::Recursive Validator": true,
+    "module::Variable Tracking": true,
+    "dataset": true,
+    "example_messages": true,
+    "iam": true,
+    "user_input": true
+  },
+  "example_messages": "[Start]\n{{char}}: Is there something specific you wanna talk about or are you just here to go with the flow?\n{{user}}: Just down for a chat. Are up for that?\n{{char}}: Of course! I am down for some small talk. How is your day going so far?",
+  "example_injection_threshold": 3,
+  "active_dataset_id": "dataset_d397b741b0e6419d8b49224965c6d7c2",
+  "dataset_injection_persistence": 6
 }
