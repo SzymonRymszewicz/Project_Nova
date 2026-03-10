@@ -894,9 +894,3 @@ def _execute(context):
         )
 
 
-def extend(context=None):
-    context = context or {}
-    try:
-        _execute(context)
-    except Exception:
-        return

@@ -19,9 +19,10 @@ function maybeStopGenerationBeforeNavigation(previousView, nextView) {
 	}
 	if (typeof stopMessageGeneration === 'function') {
 		stopMessageGeneration(true);
+	} else {
+		// Fallback for when the primary stop function is unavailable.
+		requestStopGenerationFallback(window.currentChatId, window.currentBotName);
 	}
-	// Safety fallback in case UI lock state is temporarily out of sync.
-	requestStopGenerationFallback(window.currentChatId, window.currentBotName);
 }
 
 function renderViewByName(view) {
@@ -183,13 +184,6 @@ messageInput.addEventListener('keydown', event => {
 navItems.forEach(item => {
 	item.addEventListener('click', () => {
 		const targetView = item.dataset.view;
-		const leavingChat = currentView === 'last-chat' && targetView !== 'last-chat';
-		if (leavingChat) {
-			// Stop active generation but keep navigation intent on the clicked tab.
-			if (typeof stopMessageGeneration === 'function') {
-				stopMessageGeneration(true);
-			}
-		}
 		navItems.forEach(i => i.classList.remove('active'));
 		item.classList.add('active');
 		showView(targetView);
