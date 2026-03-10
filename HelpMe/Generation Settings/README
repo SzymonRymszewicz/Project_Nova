@@ -1,0 +1,148 @@
+# Generation Settings
+
+Where to change: **Settings → Generation**
+
+---
+
+## 1) Temperature (`0.1` to `2.0`)
+
+**Purpose**
+- Controls randomness.
+- Lower = more deterministic and focused.
+- Higher = more creative and varied.
+
+**Recommended ranges**
+- `0.2` to `0.5` → coding, factual replies
+- `0.6` to `0.9` → balanced default
+- `1.0+` → creative writing / brainstorming
+
+---
+
+## 2) Max Tokens (Context)
+
+**Purpose**
+- Sets token budget for prompt/context handling.
+
+**Tuning notes**
+- Increase for longer memory and larger context.
+- Decrease for better speed or smaller models.
+- Very high values can reduce responsiveness on weaker models.
+
+---
+
+## 3) Max Response Length
+
+**Purpose**
+- Caps response length per assistant reply.
+
+**Tuning notes**
+- `80–180` for short answers.
+- `200–500` for detailed answers.
+- Raise if responses end too early.
+
+---
+
+## 4) Stop Strings
+
+**Purpose**
+- Stops generation when any listed string appears.
+
+**Tuning notes**
+- Add one stop string per line.
+- Useful for strict output formats.
+- Avoid common strings that may stop replies too early.
+
+---
+
+## 5) Top K Sampling
+
+**Purpose**
+- Limits candidate token pool before sampling.
+
+**Tuning notes**
+- Lower (`20–40`) for stable/focused output.
+- Higher (`80–200`) for variety.
+- If output drifts, lower Top K.
+
+---
+
+## 6) Repeat Penalty (Enable toggle)
+
+**Purpose**
+- Reduces repeated words/phrases and looping.
+
+**Tuning notes**
+- Keep enabled in most cases.
+- Typical useful range: `1.0–1.2`.
+- Too high may sound unnatural.
+
+---
+
+## 7) Max Top P Sampling (Enable toggle)
+
+**Purpose**
+- Upper probability threshold for nucleus-style filtering.
+
+**Tuning notes**
+- Typical range: `0.85–0.98`.
+- Lower value = less randomness.
+- Disabled = not applied.
+
+---
+
+## 8) Min Top P Sampling (Enable toggle)
+
+**Purpose**
+- Lower probability floor for token filtering.
+
+**Tuning notes**
+- Keep low (commonly `0.0–0.1`).
+- High values can make output brittle/repetitive.
+- Safe baseline: `0.05`.
+
+---
+
+## 9) Max Context Messages (advanced/internal)
+
+**Purpose**
+- Limits how many recent chat messages are included when building prompt context.
+
+**Tuning notes**
+- Higher = better continuity, more token usage.
+- Lower = faster responses, less memory carry-over.
+- Useful when long chats get slow.
+
+---
+
+## Practical Presets
+
+### Balanced (recommended)
+- Temperature: `0.7`
+- Top K: `40`
+- Repeat Penalty: enabled, `1.0`
+- Top P Max: enabled, `0.95`
+- Top P Min: enabled, `0.05`
+
+### Focused / Coding
+- Temperature: `0.3–0.5`
+- Top K: `20–40`
+- Repeat Penalty: enabled, `1.05–1.15`
+- Top P Max: `0.85–0.92`
+
+### Creative / Brainstorming
+- Temperature: `0.9–1.2`
+- Top K: `60–120`
+- Repeat Penalty: enabled, `1.0–1.1`
+- Top P Max: `0.95–0.99`
+
+---
+
+## Recommended Tuning Order
+
+1. Temperature
+2. Max Response Length
+3. Top K
+4. Repeat Penalty
+5. Top P Max / Min
+
+> Change one setting at a time and test with the same prompt for consistent comparisons.

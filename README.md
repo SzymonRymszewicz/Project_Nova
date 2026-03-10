@@ -1,109 +1,91 @@
-# Project_Nova WIP
-  
-Project Nova is a python app where you can create and interact with bots. This program uses what I like to call the TKAEM system, meaning the Tiered Keyword and Embedding Memory system. This makes even high context bots have dynamic human-like memory and thought processing modules. This app does not provide an API and works only as an interface(similar to Silly Tavern). You can use a localhost or connect to your preferred API in order to interact with the bot.
+# BlueNovaAI v1.0.0
 
-I will not take any responsibility for what you do with this app. The LLM's and bots outputs in general are dependent on their definition and most importantly, the user input. I have no control or means to control what you do locally with this app.
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)
+![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey?logo=windows)
+![License](https://img.shields.io/badge/License-GPL%20v3-green)
+![Version](https://img.shields.io/badge/Version-1.0.0-orange)
 
-If you like what I create, consider supporting me by buying me a coffee ;)
+> **BlueNovaAI** is a local-first AI chat workspace that puts you in full control — define custom bots with personalities, compose rich prompt pipelines, manage conversation history with edit/regenerate/continue actions, and keep everything running on your own machine without any cloud dependency.
 
-<a href="https://www.buymeacoffee.com/saimon_szaszakg" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-yellow.png" alt="Buy Me A Coffee" height="100" width="500"></a>
+BlueNovaAI is a local-first AI chat workspace focused on bots, personas, modular prompt composition, and chat lifecycle tooling (edit, regenerate, continue, variants, datasets, debug logs).
 
----
+It runs as a Python desktop-like app with a built-in local web UI server.
 
-## Simple Guide
+## Highlights
 
-### 1) Start the app
+- Local-first architecture with OpenAI-compatible API support (localhost and OpenAI-style providers)
+- Bot and persona management with reusable definitions and media
+- Modular prompt pipeline with ordered prompt sections and module extensions
+- Chat actions: regenerate, continue, edit, delete, and assistant variant navigation
+- Dataset injection system for static and dynamic context entries
+- Streaming chat UX with controlled speed options
+- Debug logging for generation pipeline and action flow analysis
 
-From the `Nova` folder, run:
+## Why BlueNovaAI?
 
-```bash
-start.bat
+Most AI chat frontends are thin wrappers around a single API call. BlueNovaAI takes a different approach:
+
+- **Bots are first-class objects** — each bot owns its personality, scenario rules, prompt module stack, and datasets independently.
+- **Prompt pipeline is composable** — sections like `conduct`, `scenario`, `core`, `iam`, and dynamically loaded modules combine in a defined order, giving you full visibility and control over what reaches the model.
+- **Chat actions are non-destructive** — regenerate and continue produce variant history so you can navigate between different AI responses without losing previous ones.
+- **Everything stays local** — no telemetry, no account, no cloud storage. Your bots, chats, and personas live as plain files on your disk.
+- **Modular by design** — drop a new module into `Modules/` and it integrates into the pipeline automatically.
+
+## Tech Stack
+
+- Python 3.x
+- Built-in HTTP server (`http.server`)
+- Vanilla HTML/CSS/JavaScript frontend
+- File-based storage for bots, chats, personas, datasets, and settings
+
+## Project Structure
+
+```
+BlueNovaAI/
+	Code/         # Application backend and managers
+	Website/      # Frontend (main.html, JS, CSS)
+	Bots/         # Bot definitions and chat folders
+	Personas/     # Persona definitions and assets
+	Modules/      # Prompt/runtime modules
+	Datasets/     # Dataset context assets
+	Debug/        # Debug session logs
+	run.bat       # Windows launcher
+	settings.txt  # Runtime settings
 ```
 
-The script prepares dependencies, launches the app, starts the local GUI server, and opens the browser.
+## Getting Started (Windows)
 
-### 2) Configure API Client (Settings)
+1. Install Python 3.10+ and ensure it is available in PATH (`py -3` or `python`).
+2. Open this folder in your terminal.
+3. Start the app:
 
-1. Open **Settings**.
-2. Choose provider:
-	- `Localhost (LM Studio)` for LM Studio/OpenAI-compatible local server
-	- `LocalModel (Direct File)` to run a local model file directly from this project
-	- `OpenAI` for OpenAI API
-3. Confirm/update:
-	- **Localhost:** API Base URL + Model
-	- **LocalModel:** pick model file in **Local Model File** (from `Models/ChatModels`)
-	- **OpenAI:** API Base URL + Model + API Key
-4. Click **Test Connection**.
-5. Save settings.
+```bat
+run.bat
+```
 
-### 3) Create your Bot
+`run.bat` auto-detects `py`/`python` and launches `Code/main.py`.
 
-1. Open **Bot Creation**.
-2. Set bot name and core/scenario text.
-3. (Optional) adjust prompt order in advanced settings.
-4. Save.
+## Manual Run
 
-### 4) Create/select Persona
+```bat
+py -3 Code\main.py
+```
 
-1. Open **Personas** or **Persona Creation**.
-2. Create or choose a persona.
-3. Add persona definition text (stored as persona context).
+or
 
-### 5) Start chatting
+```bat
+python Code\main.py
+```
 
-1. Open **Chat**.
-2. Select bot/persona.
-3. Send a message.
-4. Use hover actions on messages when needed:
-	- Bot message: edit, regenerate, continue, delete
-	- User message: edit, delete (and regenerate if no bot reply follows)
-5. The app stores your conversation locally.
+## Troubleshooting
 
----
-
-## Notes
-
-- This project is still WIP, but the core end-to-end chat loop is active.
-- Existing chats/settings are stored locally in project folders.
-- If responses fail, check provider/base URL/model/API key first.
-
----
-
-## Version 1.0.1 Update - What's new
-
-This update focuses on chat quality-of-life, better message controls, and direct local model support.
-
-### 1) New message action controls in Chat
-
-Messages now have action buttons on hover:
-
-- **Bot messages:** edit, regenerate, continue, delete
-- **User messages:** edit, delete
-- **User regenerate fallback:** if a user message has no following bot reply (for example after deleting a bot response), regenerate is available from that user message to create a new assistant reply.
-
-### 2) Better generation UX feedback
-
-- The chat now shows temporary **Thinking...** states during generation/regeneration.
-- Regenerate and continue now display visual processing feedback directly in the message flow.
-
-### 3) Improved regenerate/continue behavior
-
-- Continue logic was improved to reduce repeated duplicate chunks.
-- Regenerate can target both assistant messages and eligible user messages (when no assistant reply exists yet).
-
-### 4) API Client now supports LocalModel provider
-
-In addition to **Localhost** and **OpenAI**, there is now:
-
-- **LocalModel (Direct File)** provider
-- Local model file picker that lists files from `Models/ChatModels`
-- Model list filtering to likely model file types (e.g. `.gguf`, `.bin`, `.safetensors`, `.pt`, `.pth`)
-
-> Note: LocalModel requires `llama-cpp-python` in your Python environment.
-
-### 5) Startup and repo safety improvements
-
-- `start.bat` now bootstraps dependencies and launches the app directly.
-
+- App does not start:
+	- Verify Python is installed and available in PATH.
+	- Run `py -3 --version` or `python --version`.
+- API errors:
+	- Check provider, base URL, API key, and model in Settings.
+- Slow or unstable generation:
+	- Lower `max_context_messages` and `max_response_length`.
+	- Review newest debug file in `Debug/`.
 
 

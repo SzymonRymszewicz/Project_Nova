@@ -1,0 +1,89 @@
+{
+  "items": {
+    "message_2026_03_04T08_58_20.txt": {
+      "iam_id": "message_2026_03_04T08_58_20.txt",
+      "phase": 0,
+      "summarized_phase1": false,
+      "summarized_phase2": false,
+      "protected_core": false,
+      "hidden_from_chat": false,
+      "merged_out": false,
+      "source_iam_ids": [],
+      "created_at": "2026-03-04T08:58:20.970039",
+      "updated_at": "2026-03-04T17:07:50.943118",
+      "token_count": 6
+    },
+    "message_2026_03_04T08_58_20_001.txt": {
+      "iam_id": "message_2026_03_04T08_58_20_001.txt",
+      "phase": 0,
+      "summarized_phase1": false,
+      "summarized_phase2": false,
+      "protected_core": false,
+      "hidden_from_chat": false,
+      "merged_out": false,
+      "source_iam_ids": [],
+      "created_at": "2026-03-04T08:58:20.970039",
+      "updated_at": "2026-03-04T17:07:50.943118",
+      "token_count": 6
+    },
+    "message_2026_03_04T16_40_50.txt": {
+      "iam_id": "message_2026_03_04T16_40_50.txt",
+      "phase": 0,
+      "summarized_phase1": false,
+      "summarized_phase2": false,
+      "protected_core": false,
+      "hidden_from_chat": false,
+      "merged_out": false,
+      "source_iam_ids": [],
+      "created_at": "2026-03-04T16:40:50.335848",
+      "updated_at": "2026-03-04T17:07:50.943118",
+      "token_count": 2
+    },
+    "message_2026_03_04T16_40_56.txt": {
+      "iam_id": "message_2026_03_04T16_40_56.txt",
+      "phase": 0,
+      "summarized_phase1": false,
+      "summarized_phase2": false,
+      "protected_core": false,
+      "hidden_from_chat": false,
+      "merged_out": false,
+      "source_iam_ids": [],
+      "created_at": "2026-03-04T16:41:19.016989",
+      "updated_at": "2026-03-04T17:07:50.943118",
+      "token_count": 16
+    },
+    "message_2026_03_04T16_49_06.txt": {
+      "iam_id": "message_2026_03_04T16_49_06.txt",
+      "phase": 0,
+      "summarized_phase1": false,
+      "summarized_phase2": false,
+      "protected_core": false,
+      "hidden_from_chat": false,
+      "merged_out": false,
+      "source_iam_ids": [],
+      "created_at": "2026-03-04T16:49:06.325993",
+      "updated_at": "2026-03-04T17:07:50.943118",
+      "token_count": 13
+    },
+    "message_2026_03_04T17_01_00.txt": {
+      "iam_id": "message_2026_03_04T17_01_00.txt",
+      "phase": 0,
+      "summarized_phase1": false,
+      "summarized_phase2": false,
+      "protected_core": false,
+      "hidden_from_chat": false,
+      "merged_out": false,
+      "source_iam_ids": [],
+      "created_at": "2026-03-04T17:06:53.777316",
+      "updated_at": "2026-03-04T17:07:50.943118",
+      "token_count": 38
+    }
+  },
+  "state": {
+    "run_tick": 17,
+    "last_run_at": "2026-03-04T17:07:50.943118",
+    "last_phase1_changes": 0,
+    "last_phase2_changes": 0,
+    "last_phase3_changes": 0
+  }
+}

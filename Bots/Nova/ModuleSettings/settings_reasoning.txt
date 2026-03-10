@@ -1,0 +1,9 @@
+llm_max_retries=1
+llm_max_tokens=220
+module_max_latency_ms=2200
+module_max_token_budget=220
+reasoning_context_max_chars=800
+reasoning_questions_json=["What does the user want right now?","What does the user likely expect from me next?","What response strategy best satisfies that while respecting core/scenario?"]
+skip_max_chars=24
+skip_regex=^(hi|hello|hey|ok|okay|thanks|thank you|yo|sup|cool|k|kk|nice)[!. ]*$
+skip_trivial_enabled=true

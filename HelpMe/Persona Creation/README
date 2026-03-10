@@ -1,0 +1,114 @@
+# Persona Creation
+
+Where to open: **Persona Creation** tab (left sidebar)
+
+Persona Creation is used to create a new user persona profile with text description, cover/icon visuals, and image assets.
+
+---
+
+## What this tab does
+
+- Creates a new persona in `Personas/<PersonaId>/`
+- Lets you set:
+  - Name
+  - Description
+  - Cover art + fit
+  - Icon + fit
+  - Image library for that persona draft
+- Supports cloning an existing persona into the draft editor.
+
+---
+
+## Main fields
+
+### Name
+- Required.
+- If empty, creation is blocked with a prompt.
+- Backend sanitizes folder id to safe characters (`a-z`, `A-Z`, `0-9`, `.`, `_`, `-`).
+
+### Description
+- Main persona text content.
+- Token badge shows approximate size while editing.
+
+---
+
+## Media controls
+
+### Cover Art + Icon previews
+- You can assign images from the draft gallery to Cover or Icon.
+- If no art is assigned, preview shows fallback styling/initial.
+
+### Fit controls
+Both Cover and Icon have:
+- Zoom (%)
+- Position X (%)
+- Position Y (%)
+
+These values are saved in draft and persisted to final persona metadata.
+
+### Images gallery
+- Upload multiple images.
+- Set image as Cover.
+- Set image as Icon.
+- Delete image (also clears cover/icon assignment if that image was used).
+
+---
+
+## Draft behavior
+
+Persona Creation uses persistent draft storage via `/api/persona/draft`:
+- `load` when opening tab
+- `save` during edits
+- `clear` after successful creation or manual discard
+
+So unfinished work is restored when you reopen the tab.
+
+---
+
+## Clone Existing Persona
+
+Use **Clone Existing Persona** to copy an existing persona into the creation draft.
+
+Clone flow copies:
+- name (with `_copy` suffix)
+- description
+- cover/icon fit values
+- current image assets (converted into draft image data)
+
+This is useful for fast variants.
+
+---
+
+## Create flow (what happens on save)
+
+When you press **Create Persona**:
+1. Creates base persona entry via `/api/personas` (`action: create`).
+2. Uploads draft images via `/api/persona/images` (`action: upload`).
+3. Applies cover/icon image selection via:
+   - `action: set_coverart`
+   - `action: set_icon`
+4. Updates final persona metadata via `/api/personas` (`action: update`) with:
+   - `name`
+   - `description`
+   - `cover_art_fit`
+   - `icon_fit`
+
+On success, draft is cleared and UI returns to Persona list.
+
+---
+
+## Files/folders created
+
+A new persona creates this structure:
+- `Personas/<PersonaId>/persona.json`
+- `Personas/<PersonaId>/Images/`
+- `Personas/<PersonaId>/Coverart/`
+
+`persona.json` stores identity and fit metadata (including cover/icon links).
+
+---
+
+## Notes
+
+- The default `User` persona cannot be deleted from Persona management.
+- Persona creation draft and persona edit drafts are separate systems.

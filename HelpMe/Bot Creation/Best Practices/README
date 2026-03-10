@@ -1,0 +1,151 @@
+# Bot Creation Best Practices
+
+## Less Is More (Core Principle)
+
+The best bots are usually **clear, short, and intentional**.
+Adding too much text, too many modules, or too many rules often makes output worse, not better.
+
+If quality drops, simplify first. Context is limited and less words can result in a richer bot that acts just the same.
+
+---
+
+## 1) Start with a minimal core
+
+Write a compact `core.txt` that defines only:
+- identity,
+- tone,
+- boundaries,
+- mission.
+
+Good target: **5–20 focused lines**.
+
+Avoid writing a novel in core.
+Long cores create conflicting instructions and unstable behavior.
+
+---
+
+## 2) Keep scenario rules specific
+
+Use `scenario.txt` only for world/context rules that must stay consistent.
+
+Prefer:
+- short rules,
+- concrete constraints,
+- direct wording.
+
+Avoid:
+- repetitive restatements,
+- vague style mandates,
+- duplicated rules already in core.
+
+---
+
+## 3) Use Prompt Order with intent
+
+Prompt Order should be simple and predictable.
+A strong baseline:
+1. `scenario`
+2. `core`
+3. `user_persona`
+4. modules (`module::...`)
+5. `example_messages`
+6. `iam`
+7. `user_input`
+
+If behavior feels noisy, disable sections before adding new ones.
+
+---
+
+## 4) Add modules slowly
+
+Enable one module at a time and test.
+
+Recommended approach:
+- Start with **0–1 modules**.
+- Add a second module only if a real problem remains.
+- Tune module settings only after you can describe what is wrong.
+
+Too many active modules can fight for control of response style.
+
+---
+
+## 5) Use short IAM sets
+
+IAM is powerful but expensive.
+
+Keep IAM messages:
+- concise,
+- high-value,
+- non-redundant.
+
+If you need many IAMs, split them into sets and select only what current chat needs.
+
+---
+
+## 6) Keep examples small and sharp
+
+Example Messages should teach format/voice quickly.
+
+Best practice:
+- 1–3 high-quality examples,
+- same style you want in output,
+- minimal filler.
+
+If your bot overfits to examples, raise Example Injection Threshold or reduce example size.
+
+---
+
+## 7) Tune by subtraction first
+
+When results are bad, try this order:
+1. Remove duplicate rules
+2. Shorten core/scenario
+3. Disable one module
+4. Reduce IAM
+5. Re-test with the same prompt
+
+Most improvements come from deleting noise, not adding more instructions.
+
+---
+
+## 8) Consistency beats complexity
+
+A simple, consistent bot is better than a complex, fragile bot.
+
+Choose:
+- fewer rules,
+- fewer modules,
+- clearer wording,
+- repeatable behavior.
+
+This scales better across long chats.
+
+---
+
+## 9) The Abstract(MOST IMPORTANT)
+
+LLMs, and thus chat bots, are both extremely stupid and smart.
+
+For example you might want to add a complex story or example of how your bot's personality should be but...
+
+When you write: Nova is a bright and intelligent assistant that loves helping people.
+
+It's the same as: Bright; Intelligent; Helpful.
+
+The LLM will understand simple keywords and sentences just the same but a simple keyword approach saves precious tokens that could be used on something else. Remember, context is limited and thus less is more. More tokens for other stuff that is.
+
+BUT. LLMs are also extremely dumb when it comes to subtext or vague definitions.
+
+When you write: The {{char}} can sometimes speak for the {{user}} BUT only when it matters.
+
+The LLM will 'think' something like: Well shiii- everything matters, time to write an essay as the user's persona while forgetting about me having to roleplay as the {{char}}.
+
+NEVER be vague. When LLMs see the words: maybe, sometimes, only when, etc. etc. It does not understand the meaning behind 'sometimes' and you are just giving it permission to that thing.
+
+When you want the bot to do or not do something, do exactly that.
+
+Write: DO NOT speak for the {{user}}, DO roleplay as {{char}} etc.
+
+This gives the LLM clear boundaries to follow and keeps you sane from having to edit/regenerate messages.
+
+---

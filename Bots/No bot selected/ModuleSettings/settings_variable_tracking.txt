@@ -1,0 +1,9 @@
+alias_bot_hp=bot hp|assistant hp|enemy hp
+alias_mana=mana|mp
+alias_stamina=stamina|energy
+alias_time=time|clock
+alias_user_hp=hp|my hp|user hp|health
+auto_tracking_enabled=true
+context_max_chars=420
+context_max_items=12
+track_assistant_messages=false

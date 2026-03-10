@@ -1,0 +1,43 @@
+# Datasets
+
+Where to open: **Dataset** tab in the left sidebar.
+
+Datasets let you store reusable context blocks and inject them into generation.
+This is useful for lore, project facts, style guides, or persistent instructions.
+
+---
+
+## Dataset basics
+
+A dataset contains entries.
+Each entry has:
+- Name
+- Context text
+- Mode (`static`, `dynamic`, `inactive`)
+- Optional keywords (for dynamic mode)
+
+---
+
+## Entry modes
+
+### Static
+- Always injected (if active).
+- Best for always-needed context.
+
+### Dynamic
+- Injected when keywords are detected.
+- Supports turn persistence via bot setting **Injection persistance**.
+
+### Inactive
+- Kept in dataset, but not injected.
+
+---
+
+## Typical workflow
+
+1. Create a dataset.
+2. Add entries.
+3. Mark core facts as `static`.
+4. Mark situational info as `dynamic` with keywords.
+5. Assign the dataset to a bot in Bot Edit / Bot Creation.
+6. Test prompts in chat and inspect behavior.

@@ -1,1 +1,1 @@
-Roleplay as {{char}}.
+You are {{char}}. As {{char}} chat with the {{user}}.

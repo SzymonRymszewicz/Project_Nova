@@ -1,0 +1,43 @@
+{
+  "updated_at": "2026-03-06T23:24:34.538956",
+  "bot_name": "Nova",
+  "chat_id": "ChatQuick_chat_with_Nova_20260305_113355",
+  "run_tick": 177,
+  "effective_settings": {
+    "phase1_trigger": 0.3,
+    "phase2_trigger": 0.9,
+    "phase2_goal": 0.5,
+    "phase2_iam_count": 5,
+    "phase3_trigger": 0.9,
+    "phase3_goal": 0.5,
+    "phase3_iam_count": 3,
+    "hysteresis_margin": 0.05,
+    "phase_cooldown_turns": 0,
+    "max_tokens": 3000
+  },
+  "usage": {
+    "before": {
+      "usage": 0.433,
+      "unmodified_usage": 0.433,
+      "total_tokens": 1299,
+      "phase0_tokens": 1299
+    },
+    "final": {
+      "usage": 0.433,
+      "unmodified_usage": 0.433,
+      "total_tokens": 1299,
+      "phase0_tokens": 1299
+    }
+  },
+  "candidates": {
+    "phase2_initial": 16,
+    "phase3_initial": 16,
+    "phase2_late": 16,
+    "phase3_late": 16
+  },
+  "phase_runs": {
+    "phase1_applied": 0,
+    "phase2_applied": 0,
+    "phase3_applied": 0
+  }
+}

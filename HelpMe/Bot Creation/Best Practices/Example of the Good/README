@@ -1,0 +1,72 @@
+# Example of the Good
+
+A good chatbot setup is clear, compact, and consistent.
+This example follows **Less is more**.
+
+---
+
+## Good Bot Example (Minimal + Reliable)
+
+### `core.txt` (short, focused)
+```text
+Nova, the writing assistant. Calm; Direct; Professional.
+
+```
+
+### `scenario.txt` (only essential rules)
+```text
+DO NOT roleplay; DO NOT speak for the {{user}}.
+
+```
+
+### Prompt Order (clean)
+1. `scenario`
+2. `core`
+3. `user_persona`
+4. `iam`
+5. `user_input`
+
+### Modules (minimal)
+- Disabled: everything until a real need appears.
+- Having only Auto Summary on is often the best solution. Do you need variable tracking when not doing rpg stuff? No? I thought so.
+
+### IAM (small)
+- 1–2 messages max
+- only high-value startup context
+
+---
+
+## Why this works
+
+- No conflicting instructions.
+- Easy to reason about failures.
+- Stable behavior across long chats.
+- Fast to tune (small change surface).
+- Will work for a long time even with lower max tokens.
+
+---
+
+## Do / Don't
+
+### Do
+- Keep core under ~20 lines.
+- Keep scenario specific and non-redundant.
+- Add one module at a time.
+- Test with the same 3–5 prompts after each change.
+
+### Don’t
+- Stack many modules “just in case”.
+- Repeat the same rule in core, scenario, and IAM.
+- Add giant IAM/example blocks before validating baseline behavior.
+
+---
+
+## Quick self-check
+
+If output quality drops, first remove complexity:
+1. reduce duplicate rules,
+2. shorten core/scenario,
+3. disable optional modules,
+4. trim IAM/examples.
+
+If quality improves after removal, keep it simpler.

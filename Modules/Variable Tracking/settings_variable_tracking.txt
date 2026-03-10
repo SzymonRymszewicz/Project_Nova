@@ -1,0 +1,9 @@
+# Variable Tracking module settings
+# Boolean values: true/false
+
+auto_tracking_enabled=true
+track_assistant_messages=false
+
+# Prompt snippet limits
+context_max_items=12
+context_max_chars=420

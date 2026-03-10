@@ -1,0 +1,53 @@
+# Variable Tracking
+
+Variable Tracking Module tracks structured values from chat and reuses them as reliable context.
+Typical tracked values: HP, stamina, mana, time, counters, location/state fields.
+
+---
+
+## What it does
+
+- extracts variable updates from messages,
+- normalizes names with aliases,
+- stores a latest snapshot with metadata,
+- injects a compact variable context snippet back into prompt flow.
+
+---
+
+## Settings location
+
+Default:
+- `Modules/Variable Tracking/settings_variable_tracking.txt`
+
+Per-bot copy:
+- `Bots/<BotName>/ModuleSettings/settings_variable_tracking.txt`
+
+---
+
+## Settings explained
+
+### `auto_tracking_enabled`
+- Master enable toggle (`true/false`).
+
+### `track_assistant_messages`
+- `false`: only user messages update variables.
+- `true`: assistant messages can update variables too.
+
+### `context_max_items`
+- Max number of variables included in prompt context.
+
+### `context_max_chars`
+- Max total characters for variable context snippet.
+
+### `alias_<canonical_name>`
+- Custom alias mapping in `|`-separated format.
+- Example: `alias_user_hp=hp|my hp|health`
+- Helps map natural text to one canonical key.
+
+---
+
+## Quick tuning guide
+
+- For safer tracking: keep `track_assistant_messages=false`.
+- For RPG/sim worlds: add more aliases for domain terms.
+- If prompt is too crowded: lower `context_max_items` and `context_max_chars`.

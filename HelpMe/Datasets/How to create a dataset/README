@@ -1,0 +1,55 @@
+# How to create a dataset
+
+Where to open: **Dataset** tab.
+
+---
+
+## Create a new dataset
+
+1. Click **New Dataset**.
+2. Enter a clear name.
+3. Save.
+
+---
+
+## Add your first entries
+
+For each entry:
+1. Click **New Entry**.
+2. Set **Name**.
+3. Add **Context** text.
+4. Choose **Mode**:
+   - `static` for always-on context,
+   - `dynamic` for keyword-triggered context,
+   - `inactive` to keep it disabled.
+
+*Note: Remeber to save the changes.*
+
+---
+
+## Assign dataset to a bot
+
+Create/use a bot and set:
+- **Dataset**: pick your dataset
+- **Injection persistance** (advanced): how many user turns dynamic entries stay active after trigger
+
+If a keyword is hit again, the persistence timer resets.
+
+---
+
+## Quick starter template
+
+Use this structure for each entry:
+- **Name**: short and specific
+- **Context**: plain, direct facts/instructions
+- **Mode**: static or dynamic
+- **Keywords** (dynamic only): 2-8 specific trigger words
+
+---
+
+## Validation checklist
+
+- Dataset is selected on the bot.
+- Entry mode is not `inactive`.
+- Dynamic entries have useful keywords.
+- Context text is not empty.

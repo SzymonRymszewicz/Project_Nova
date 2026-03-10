@@ -1,0 +1,115 @@
+# Event Tracking
+
+Event Tracking preserves long-form continuity by converting message windows into timeline events.
+It stores concise event summaries per chat and injects selected events back into prompt context.
+
+---
+
+## How it is enabled
+
+- Prompt Order key: `module::Event Tracking`
+- If that row is enabled in Prompt Order, the module runs for the active bot/chat.
+
+---
+
+## What it does
+
+- Reads effective IAM messages from the active chat (`Bots/<BotName>/<ChatId>/IAM/`).
+- Groups messages into windows using `messages_per_event`.
+- Creates timeline events with stable fields:
+	- `id`
+	- `created_at`
+	- `range.from_index` / `range.to_index`
+	- `timeline_summary`
+	- `priority_tags` (`critical`, `relationship`, `location`, `objective`)
+	- `relevance_score` (`0..1`)
+- Uses LLM extraction first, then deterministic fallback if needed.
+- Prunes oldest events when count exceeds `max_events`.
+- Injects top scored recent events into prompt context (bounded by module settings).
+
+---
+
+## Runtime storage
+
+Per active chat folder (`Bots/<BotName>/<ChatId>/Events/`):
+
+- `evt_XXXX.json`: one file per timeline event.
+- `events_meta.json`: processing cursor + counters + auto-creation state.
+- `event_tracking_status.json`: live status used by UI polling.
+
+---
+
+## Settings location
+
+Default:
+- `Modules/Event Tracking/settings_event_tracking.txt`
+
+Per-bot copy:
+- `Bots/<BotName>/ModuleSettings/settings_event_tracking.txt`
+
+---
+
+## Settings explained
+
+### Event creation window
+- `messages_per_event`
+	- Create one event every N effective IAM messages.
+- `max_events`
+	- Keep at most this many event files in chat `Events/`.
+
+### Context injection
+- `context_max_events`
+	- Number of recent events considered for ranking.
+- `inject_top_k_events`
+	- Number of highest scored events injected into prompt.
+- `context_max_chars`
+	- Max chars for injected event timeline context.
+- `summary_max_chars`
+	- Max chars per event `timeline_summary`.
+
+### LLM and latency budget
+- `llm_max_tokens`
+	- Max tokens for event extraction response.
+- `llm_max_retries`
+	- Retry count on extraction failure.
+- `module_max_latency_ms`
+	- Upper time budget for one module run.
+
+### Extraction guidance
+- `question_timeline_summary`
+	- Prompt question used to guide timeline summarization.
+
+---
+
+## Chat UX and panel controls
+
+Status message while active:
+- `Keeping a track on things`
+
+Event Timeline panel actions:
+- `Refresh`: fetch latest module status/events.
+- `Force Event Pass`: force-create an event from latest window (even if below normal threshold).
+- `New Event`: manual event creation.
+- `Enable auto event creation?`: when OFF, automatic creation is paused and events are manual-only.
+- Per-event actions: edit/delete from the timeline list.
+
+---
+
+## Notes and behavior details
+
+- Assistant variant handling: module reads selected assistant variant content when variants exist.
+- If model output is malformed, JSON-like garbage, or empty, module falls back safely to deterministic summary.
+- Event selection for prompt injection is score-based (relevance + recency + priority tag bonus).
+
+---
+
+## Quick tuning guide
+
+- Want fewer but denser events:
+	- Increase `messages_per_event`, decrease `max_events`.
+- Want stronger continuity recall in replies:
+	- Increase `context_max_events` and/or `inject_top_k_events` (watch `context_max_chars`).
+- Want faster/safer runtime:
+	- Lower `llm_max_tokens`, `llm_max_retries`, and/or `module_max_latency_ms`.
+- If summaries feel too short:
+	- Increase `summary_max_chars` moderately.

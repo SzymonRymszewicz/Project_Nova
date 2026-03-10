@@ -1,0 +1,10 @@
+context_max_chars=900
+context_max_events=4
+inject_top_k_events=3
+llm_max_retries=1
+llm_max_tokens=260
+max_events=10
+messages_per_event=10
+module_max_latency_ms=9000
+question_timeline_summary=Write one detailed timeline summary that captures what happened, important dynamics, and continuity-relevant outcomes.
+summary_max_chars=380

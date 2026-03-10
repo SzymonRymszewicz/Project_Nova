@@ -1,0 +1,22 @@
+# Recursive Validator module settings
+# Iterative quality gate for assistant responses.
+
+criteria_json=[{"text":"Addresses the user's latest request directly.","enabled":true,"hard_fail":true},{"text":"Stays consistent with bot core definition and scenario rules.","enabled":true,"hard_fail":true},{"text":"Maintains the bot's established voice and relational tone without generic filler.","enabled":true,"hard_fail":false},{"text":"Is clear, coherent, and useful for the current turn.","enabled":true,"hard_fail":false}]
+
+max_iterations=2
+conditional_output_threshold=75
+hard_pass_score=70
+
+module_max_latency_ms=20000
+module_max_token_budget=700
+evaluator_max_tokens=200
+candidate_max_tokens=180
+evaluator_reserved_ms=2200
+precheck_min_score=44
+
+min_improvement_delta=1.5
+stagnation_stop_enabled=true
+min_iterations_before_stagnation=3
+minimum_candidate_chars=28
+pending_context_ttl_ms=25000
+stream_emit_chunk_size=28

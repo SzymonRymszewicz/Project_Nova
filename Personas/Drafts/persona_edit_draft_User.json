@@ -1,0 +1,16 @@
+{
+  "name": "User",
+  "description": "A default user persona. Human.",
+  "cover_art": "/Personas/User/Coverart/User.png",
+  "icon_art": "/Personas/User/Coverart/User.png",
+  "cover_art_fit": {
+    "size": 260,
+    "x": 50,
+    "y": 35
+  },
+  "icon_fit": {
+    "size": 150,
+    "x": 50,
+    "y": 30
+  }
+}
