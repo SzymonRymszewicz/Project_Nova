@@ -6,6 +6,7 @@ from urllib.parse import parse_qs, urlparse, unquote
 
 import threading
 import json
+import sys
 
 WEB_PORT = 2137 # Port for the localhost GUI server
 
@@ -98,6 +99,24 @@ def _build_handler(callbacks):
 			if file_path.exists() and file_path.is_file():
 				self._send_static(file_path, "application/json")
 				return True
+
+			stem = file_name[len("auto_summary_status_"):-len(".json")]
+			safe_bot = ""
+			safe_chat = ""
+			if "_" in stem:
+				safe_bot, safe_chat = stem.split("_", 1)
+
+			engine = sys.modules.get("auto_summary_engine_runtime")
+			if engine is not None:
+				reader = getattr(engine, "get_runtime_status_by_safe_names", None)
+				if callable(reader):
+					try:
+						payload = reader(safe_bot, safe_chat)
+						if isinstance(payload, dict):
+							self._send_json(payload, status=HTTPStatus.OK)
+							return True
+					except Exception:
+						pass
 
 			self._send_json({"phase3_active": False, "message": "", "updated_at": ""}, status=HTTPStatus.OK)
 			return True

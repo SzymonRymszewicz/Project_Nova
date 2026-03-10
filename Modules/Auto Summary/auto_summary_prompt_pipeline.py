@@ -12,6 +12,11 @@ PHASE3_MARKER = "[[AUTO_SUMMARY_PHASE3]]"
 
 _LOCK = threading.RLock()
 _CHAT_LOCKS = {}
+_RUNTIME_STORE = {
+    "metadata": {},
+    "status": {},
+    "diagnostics": {},
+}
 
 
 def _get_chat_lock(bot_name, chat_id):
@@ -22,30 +27,78 @@ def _get_chat_lock(bot_name, chat_id):
         return _CHAT_LOCKS[key]
 
 
-def _module_root():
-    return Path(__file__).parent
-
-
-def _runtime_dir():
-    root = _module_root() / "runtime"
-    root.mkdir(parents=True, exist_ok=True)
-    return root
-
-
 def _safe_name(value):
     return re.sub(r"[^a-zA-Z0-9._-]+", "_", str(value or "unknown").strip())
 
 
-def _metadata_path(bot_name, chat_id):
-    return _runtime_dir() / f"auto_summary_meta_{_safe_name(bot_name)}_{_safe_name(chat_id)}.json"
+def _runtime_key(bot_name, chat_id):
+    return f"{_safe_name(bot_name)}::{_safe_name(chat_id)}"
 
 
-def _status_path(bot_name, chat_id):
-    return _runtime_dir() / f"auto_summary_status_{_safe_name(bot_name)}_{_safe_name(chat_id)}.json"
+def _metadata_key(bot_name, chat_id):
+    return _runtime_key(bot_name, chat_id)
 
 
-def _diagnostic_path(bot_name, chat_id):
-    return _runtime_dir() / f"auto_summary_diag_{_safe_name(bot_name)}_{_safe_name(chat_id)}.json"
+def _status_key(bot_name, chat_id):
+    return _runtime_key(bot_name, chat_id)
+
+
+def _diagnostic_key(bot_name, chat_id):
+    return _runtime_key(bot_name, chat_id)
+
+
+def _clone_payload(payload, fallback):
+    try:
+        return json.loads(json.dumps(payload))
+    except Exception:
+        return json.loads(json.dumps(fallback))
+
+
+def _load_metadata(bot_name, chat_id):
+    key = _metadata_key(bot_name, chat_id)
+    with _LOCK:
+        payload = _RUNTIME_STORE["metadata"].get(key)
+    if not isinstance(payload, dict):
+        return {"items": {}, "state": {}}
+    data = _clone_payload(payload, {"items": {}, "state": {}})
+    data.setdefault("items", {})
+    data.setdefault("state", {})
+    return data
+
+
+def _save_metadata(bot_name, chat_id, payload):
+    key = _metadata_key(bot_name, chat_id)
+    data = _clone_payload(payload, {"items": {}, "state": {}})
+    with _LOCK:
+        _RUNTIME_STORE["metadata"][key] = data
+
+
+def _save_status(bot_name, chat_id, data):
+    key = _status_key(bot_name, chat_id)
+    payload = _clone_payload(data, {"phase3_active": False, "message": "", "updated_at": ""})
+    with _LOCK:
+        _RUNTIME_STORE["status"][key] = payload
+
+
+def _save_diagnostics(bot_name, chat_id, data):
+    key = _diagnostic_key(bot_name, chat_id)
+    payload = _clone_payload(data, {})
+    with _LOCK:
+        _RUNTIME_STORE["diagnostics"][key] = payload
+
+
+def get_runtime_status_by_safe_names(safe_bot_name, safe_chat_id):
+    key = f"{_safe_name(safe_bot_name)}::{_safe_name(safe_chat_id)}"
+    fallback = {"phase3_active": False, "message": "", "updated_at": ""}
+    with _LOCK:
+        payload = _RUNTIME_STORE["status"].get(key)
+    if not isinstance(payload, dict):
+        return dict(fallback)
+    data = _clone_payload(payload, fallback)
+    data.setdefault("phase3_active", False)
+    data.setdefault("message", "")
+    data.setdefault("updated_at", "")
+    return data
 
 
 def _estimate_tokens(text):
@@ -212,35 +265,6 @@ def _load_bot_module_settings(context, bot_name):
         if isinstance(value, dict):
             return value
     return {}
-
-
-def _load_metadata(path):
-    if not path.exists():
-        return {"items": {}, "state": {}}
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-        if not isinstance(payload, dict):
-            return {"items": {}, "state": {}}
-        payload.setdefault("items", {})
-        payload.setdefault("state", {})
-        return payload
-    except Exception:
-        return {"items": {}, "state": {}}
-
-
-def _save_metadata(path, payload):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-
-
-def _save_status(path, data):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
-
-
-def _save_diagnostics(path, data):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
 def _load_iam_entries(chat_folder):
@@ -556,7 +580,7 @@ def _run_phase2(entries, meta_payload, settings):
     return applied
 
 
-def _run_phase3(entries, meta_payload, settings, context, status_file):
+def _run_phase3(entries, meta_payload, settings, context, bot_name, chat_id):
     items = meta_payload["items"]
     applied = 0
     max_passes = settings["phase3_max_passes"]
@@ -590,7 +614,7 @@ def _run_phase3(entries, meta_payload, settings, context, status_file):
 
             if not phase_started:
                 phase_started = True
-                _save_status(status_file, {
+                _save_status(bot_name, chat_id, {
                     "phase3_active": True,
                     "message": "Summarizing chat history. This might take a while...",
                     "updated_at": datetime.now().isoformat(),
@@ -614,7 +638,7 @@ def _run_phase3(entries, meta_payload, settings, context, status_file):
                 _write_entry(other_entry)
 
             applied += 1
-            _save_status(status_file, {
+            _save_status(bot_name, chat_id, {
                 "phase3_active": True,
                 "message": "Summarizing chat history. This might take a while...",
                 "pass": applied,
@@ -622,7 +646,7 @@ def _run_phase3(entries, meta_payload, settings, context, status_file):
             })
     finally:
         if phase_started:
-            _save_status(status_file, {
+            _save_status(bot_name, chat_id, {
                 "phase3_active": False,
                 "message": "",
                 "updated_at": datetime.now().isoformat(),
@@ -657,10 +681,7 @@ def _execute(context):
         if not entries:
             return
 
-        meta_file = _metadata_path(bot_name, chat_id)
-        status_file = _status_path(bot_name, chat_id)
-        diagnostic_file = _diagnostic_path(bot_name, chat_id)
-        meta_payload = _load_metadata(meta_file)
+        meta_payload = _load_metadata(bot_name, chat_id)
         _refresh_meta_for_entries(meta_payload, entries)
         state = meta_payload.setdefault("state", {})
         state["run_tick"] = _parse_int(state.get("run_tick"), 0) + 1
@@ -804,7 +825,7 @@ def _execute(context):
 
         if phase3_ready:
             before = _context_usage(entries, settings["max_tokens"])
-            phase3_count = _run_phase3(entries, meta_payload, settings, context, status_file)
+            phase3_count = _run_phase3(entries, meta_payload, settings, context, bot_name, chat_id)
             after = _context_usage(entries, settings["max_tokens"])
             if phase3_count > 0:
                 _mark_phase_triggered(state, "phase3")
@@ -824,7 +845,7 @@ def _execute(context):
         })
 
         _refresh_meta_for_entries(meta_payload, entries)
-        _save_metadata(meta_file, meta_payload)
+        _save_metadata(bot_name, chat_id, meta_payload)
         usage_final = _context_usage(entries, settings["max_tokens"])
         diagnostics = {
             "updated_at": datetime.now().isoformat(),
@@ -859,7 +880,7 @@ def _execute(context):
                 "phase3_applied": phase3_count,
             },
         }
-        _save_diagnostics(diagnostic_file, diagnostics)
+        _save_diagnostics(bot_name, chat_id, diagnostics)
         _debug(
             context,
             "run_complete",
